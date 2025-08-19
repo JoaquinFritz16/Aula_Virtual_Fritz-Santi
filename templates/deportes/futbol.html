@@ -1,0 +1,95 @@
+{% extends "base.html" %}
+{% block title %}Fixtures{% endblock %}
+{% block body %}
+
+<h2 class="mb-4">Proximos Partidos de Fútbol - Masculino</h2>
+<div class="list-group mb-5">
+    <!-- a vs b -->
+    <div class="list-group-item d-flex align-items-start">
+        <img src="{{ url_for('static', filename='images/teamA_m.png') }}" alt="match" class="rounded-circle me-3"
+            width="50" height="50">
+        <div>
+            <strong>Team A (M) vs Team B (M)</strong><br>
+            <small>Hora: 8:00 AM</small><br>
+            <small>Localización: Cancha 1</small>
+        </div>
+    </div>
+    <!-- d vs e -->
+    <div class="list-group-item d-flex align-items-start">
+        <img src="{{ url_for('static', filename='images/teamD_m.png') }}" alt="match" class="rounded-circle me-3"
+            width="50" height="50">
+        <div>
+            <strong>Team D (M) vs Team E (M)</strong><br>
+            <small>Hora: 8:20 AM</small><br>
+            <small>Localización: Cancha 2</small>
+        </div>
+    </div>
+    <!-- g vs h -->
+    <div class="list-group-item d-flex align-items-start">
+        <img src="{{ url_for('static', filename='images/teamG_m.png') }}" alt="match" class="rounded-circle me-3"
+            width="50" height="50">
+        <div>
+            <strong>Team G (M) vs Team H (M)</strong><br>
+            <small>Hora: 8:40 AM</small><br>
+            <small>Localización: Cancha 3</small>
+        </div>
+    </div>
+    <!-- j vs k -->
+    <div class="list-group-item d-flex align-items-start">
+        <img src="{{ url_for('static', filename='images/teamJ_m.png') }}" alt="match" class="rounded-circle me-3"
+            width="50" height="50">
+        <div>
+            <strong>Team J (M) vs Team K (M)</strong><br>
+            <small>Hora: 9:00 AM</small><br>
+            <small>Localización: Cancha 4</small>
+        </div>
+    </div>
+</div>
+
+<hr>
+
+<h2 class="mb-4">Proximos Partidos de Fútbol - Femenino</h2>
+<div class="list-group mb-5">
+    <!-- a vs b -->
+    <div class="list-group-item d-flex align-items-start">
+        <img src="{{ url_for('static', filename='images/teamA_f.png') }}" alt="match" class="rounded-circle me-3"
+            width="50" height="50">
+        <div>
+            <strong>Team A (F) vs Team B (F)</strong><br>
+            <small>Hora: 9:20 AM</small><br>
+            <small>Localización: Cancha 5</small>
+        </div>
+    </div>
+    <!-- d vs e -->
+    <div class="list-group-item d-flex align-items-start">
+        <img src="{{ url_for('static', filename='images/teamD_f.png') }}" alt="match" class="rounded-circle me-3"
+            width="50" height="50">
+        <div>
+            <strong>Team D (F) vs Team E (F)</strong><br>
+            <small>Hora: 9:40 AM</small><br>
+            <small>Localización: Cancha 6</small>
+        </div>
+    </div>
+    <!-- g vs h -->
+    <div class="list-group-item d-flex align-items-start">
+        <img src="{{ url_for('static', filename='images/teamG_f.png') }}" alt="match" class="rounded-circle me-3"
+            width="50" height="50">
+        <div>
+            <strong>Team G (F) vs Team H (F)</strong><br>
+            <small>Hora: 10:00 AM</small><br>
+            <small>Localización: Cancha 7</small>
+        </div>
+    </div>
+    <!-- j vs k -->
+    <div class="list-group-item d-flex align-items-start">
+        <img src="{{ url_for('static', filename='images/teamJ_f.png') }}" alt="match" class="rounded-circle me-3"
+            width="50" height="50">
+        <div>
+            <strong>Team J (F) vs Team K (F)</strong><br>
+            <small>Hora: 10:20 AM</small><br>
+            <small>Localización: Cancha 8</small>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+
+{% block title %}
+Registrar equipo
+{% endblock %}
+
+{% block body %}
+<h1>Equipos registrados</h1>
+<ul>
+    {% for equipo in equipos %}
+        <li>{{ equipo.nombre }} - {{ equipo.deporte }} - {{ equipo.categoria}} - {{ equipo.genero}}</li>
+    {% endfor %}
+</ul>
+{% endblock %}
