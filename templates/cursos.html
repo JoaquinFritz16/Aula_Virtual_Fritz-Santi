@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% block title %}Cursos - Aula Virtual{% endblock %}
+
+{% block content %}
+<h2 class="mb-4">Lista de Cursos</h2>
+<a href="{{ url_for('crear_curso') }}" class="btn btn-primary mb-3">➕ Nuevo Curso</a>
+
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>ID</th>
+            <th>Nombre</th>
+            <th>Descripción</th>
+            <th>Acciones</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for curso in cursos %}
+        <tr>
+            <td>{{ curso[0] }}</td>
+            <td>{{ curso[1] }}</td>
+            <td>{{ curso[2] }}</td>
+            <td>
+                <a href="{{ url_for('editar_curso', curso_id=curso[0]) }}" class="btn btn-warning btn-sm">Editar</a>
+                <a href="{{ url_for('eliminar_curso', curso_id=curso[0]) }}" class="btn btn-danger btn-sm">Eliminar</a>
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}

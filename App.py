@@ -1,302 +1,167 @@
-import mysql.connector
-from db import get_db_connection 
-from functools import wraps
-from flask import Flask, request, jsonify, render_template, redirect, session, url_for, flash
-
+from flask import Flask, render_template, redirect, url_for, request, flash, session
+from werkzeug.security import generate_password_hash, check_password_hash
+from models import Usuario, Curso, Tarea
+from forms import LoginForm, RegistrationForm, CourseForm
+from db import get_db_connection
 app = Flask(__name__)
-app.secret_key = 'una_clave_segura_y_larga'
-equipos_registrados = []
-# Probamos que la base de datos funcione (funcion auxiliar para verificar)
-@app.route('/test_db')
-def test_db():
-    try:
-        conn = get_db_connection()
-        cursor = conn.cursor()
-        cursor.execute("SELECT DATABASE();")
-        result = cursor.fetchone()
-        cursor.close()
-        conn.close()
-        return f"Conexión exitosa a la base de datos: {result[0]}"
-    except Exception as e:
-        return f"Error en la conexión: {str(e)}"
-# Este apartado es importantisimo para poder pedir el login siempre que sea necesario
-def login_required(f):
-    @wraps(f)
-    def decorated_function(*args, **kwargs):
-        if 'user_email' not in session:
-            return redirect(url_for('login'))
-        return f(*args, **kwargs)
-    return decorated_function
-@app.route('/login', methods=['GET', 'POST'])
-@app.route('/login', methods=['GET', 'POST'])
+app.secret_key = "clave_secreta_segura"
+
+# ---------------------------
+# INDEX
+# ---------------------------
+@app.route("/")
+def index():
+    return render_template("index.html")
+
+# ---------------------------
+# REGISTER
+# ---------------------------
+@app.route("/register", methods=["GET", "POST"])
+def register():
+    form = RegistrationForm()
+    if form.validate_on_submit():
+        nombre = form.username.data
+        email = form.email.data
+        password = generate_password_hash(form.password.data)
+        rol = "estudiante"  # o según tu lógica
+
+        Usuario.crear(nombre, email, password, rol)
+        flash("✅ Usuario registrado correctamente", "success")
+        return redirect(url_for("login"))
+
+    return render_template("register.html", form=form)
+
+# ---------------------------
+# LOGIN
+# ---------------------------
+@app.route("/login", methods=["GET", "POST"])
 def login():
-    if request.method == 'POST':
-        email = request.form['email']
-        password = request.form['password']
-        if email == "admin@copa.com" and password == "1234":
-                session['user_email'] = email
-                session['user_role'] = 'admin'
-                return redirect('/')
+    form = LoginForm()
+    if form.validate_on_submit():
+        email = form.username.data
+        password = form.password.data
+
+        usuario = Usuario.buscar_por_email(email)
+        if usuario and check_password_hash(usuario.password, password):
+            session["usuario_id"] = usuario.id
+            session["usuario_nombre"] = usuario.nombre
+            flash("Bienvenido " + usuario.nombre, "success")
+            return redirect(url_for("dashboard"))
         else:
-                error = "Datos incorrectos (modo simulación)"
-        try:
-            conn = get_db_connection()
-            cursor = conn.cursor(dictionary=True)
+            flash("❌ Credenciales incorrectas", "danger")
 
-            # Intentamos buscar al usuario en la base
-            cursor.execute("SELECT * FROM usuarios WHERE email = %s", (email,))
-            user = cursor.fetchone()
+    return render_template("login.html", form=form)
 
-            cursor.close()
-            conn.close()
-
-            # Si encontramos el usuario y coincide la contraseña
-            if user and user['password'] == password:
-                session['user_email'] = user['email']
-                session['user_role'] = user['rol']
-                session['user_id'] = user['id']
-                return redirect('/')
-            else:
-                error = "Correo o contraseña incorrectos"
-        except Exception as e:
-            print("Error al conectar con la base de datos:", e)
-        return render_template('login.html', error=error)
-
-    return render_template('login.html')
-
-@app.route('/logout')
+# ---------------------------
+# LOGOUT
+# ---------------------------
+@app.route("/logout")
 def logout():
     session.clear()
-    return redirect(url_for('index'))
+    flash("Sesión cerrada correctamente", "info")
+    return redirect(url_for("login"))
 
-@app.route('/')
-def index():
-    deportes = [
-        {"id": 1, "name": "Futbol", "image": url_for('static', filename='images/futbol.png')},
-        {"id": 2, "name": "Basquet", "image": url_for('static', filename='images/basquet.png')},
-        {"id": 3, "name": "Voley", "image": url_for('static', filename='images/volley.png')}
-    ]
-    data = {
-        "title": "Bienvenido a la aplicacion de la Copa!",
-        "description": "Esta es una aplicacion de ejemplo para la Copa Renault.",
-        "sports": deportes,
-        "number_of_sports": len(deportes)
-    }
-    return render_template('index.html', data=data, deportes=deportes)
+# ---------------------------
+# DASHBOARD
+# ---------------------------
+@app.route("/dashboard")
+def dashboard():
+    if "usuario_id" not in session:
+        return redirect(url_for("login"))
 
-@app.route('/pedro')
-@login_required
-def pedro():
-    data = {
-        "title": "Pedro"
-    }
-    return render_template('pedro.html', data=data)
-@app.route('/cantina')
-# @login_required
-def cantina():
-    return render_template('cantina.html')
+    usuario = Usuario.buscar_por_email(session["usuario_nombre"])  # o buscar_por_id si prefieres
+    if usuario.rol == "docente":
+        return render_template("dashboard_docente.html", usuario=usuario)
+    else:
+        return render_template("dashboard_estudiante.html", usuario=usuario)
 
-@app.route('/sponsors')
-# @login_required
-def sponsors():
-    return render_template('sponsors.html')
+# ---------------------------
+# CURSOS
+# ---------------------------
+@app.route("/cursos")
+def cursos():
+    if "usuario_id" not in session:
+        return redirect(url_for("login"))
 
-@app.route('/fixtures')
-@login_required
-def fixtures():
-    return render_template('fixtures.html')
+    conn = Curso.get_all(get_db_connection())
+    return render_template("cursos.html", cursos=conn)
 
-@app.route('/futbol')
-# @login_required
-def futbol():
-    return render_template('./deportes/futbol.html')
+@app.route("/cursos/agregar", methods=["GET", "POST"])
+def agregar_curso():
+    if "usuario_id" not in session:
+        return redirect(url_for("login"))
 
-@app.route('/basquet')
-# @login_required
-def basquet():
-    return render_template('./deportes/basquet.html')
-
-@app.route('/voley')
-# @login_required
-def voley():
-    return render_template('./deportes/voley.html')
-@app.route('/registrar_equipo', methods=['GET', 'POST'])
-@login_required
-
-# Funcion clave para poder agregar equipos a la base de datos (dependiendo del usuario y de su id con su id de colegio)
-def registrar_equipo():
-    conn = get_db_connection()
-    #Es 1000000 veces mas facil manejar diccionarios que tuplas
-    cursor = conn.cursor(dictionary=True)
-
-    user_id = session.get('user_id')
-    cursor.execute("SELECT id_colegio FROM usuarios WHERE id = %s", (user_id,))
-    usuario = cursor.fetchone()
-
-    if not usuario or not usuario['id_colegio']:
-        flash("No se encontró tu colegio", "danger")
-        return render_template('registrar_equipo.html', error="No se encontró tu colegio")
-
-    id_colegio = usuario['id_colegio']
-
-    cursor.execute("SELECT estado FROM Colegios WHERE id_colegio = %s", (id_colegio,))
-    colegio = cursor.fetchone()
-
-    if not colegio or colegio['estado'] != 'aprobado':
-        flash("Tu colegio aún no fue aprobado", "danger")
-        return render_template('registrar_equipo.html')
-
-    if request.method == 'POST':
-        nombre_equipo = request.form.get('nombre')
-        deporte = request.form.get('deporte')
-        categoria = request.form.get('categoria')
-        genero = request.form.get('genero')
-
-        cursor.execute("""
-            INSERT INTO Equipos (nombre, deporte, categoria, genero, id_colegio)
-            VALUES (%s, %s, %s, %s, %s)
-            """, (nombre_equipo, deporte, categoria, genero, id_colegio))
-        conn.commit()
-
-        flash("Equipo registrado correctamente", "success")
-        return redirect(url_for('lista_equipos'))
-
-
-    # Si es GET, mostrar formulario vacío
-    return render_template('registrar_equipo.html')
-
-# Luego del registro se muestran los equipos registrados
-@app.route('/equipos')
-@login_required
-def lista_equipos():
-    conn = get_db_connection()
-    # Odio las tuplas
-    cursor = conn.cursor(dictionary=True)
-
-    user_id = session.get('user_id')
-    cursor.execute("SELECT id_colegio FROM usuarios WHERE id = %s", (user_id,))
-    usuario = cursor.fetchone()
-
-    if not usuario or not usuario['id_colegio']:
-        flash("No se encontró tu colegio", "danger")
-        return redirect(url_for('home'))
-
-    id_colegio = usuario['id_colegio']
-    cursor.execute("SELECT * FROM Equipos WHERE id_colegio = %s", (id_colegio,))
-    equipos = cursor.fetchall()
-
-    cursor.close()
-    conn.close()
-
-    return render_template('equipos.html', equipos=equipos)
-
-@app.route('/registrar_colegio', methods=['GET', 'POST'])
-# Te diria que esta funcion es basicamente el esqueleto de la app para poder movernos NECESITAMOS que te registres como colegio
-def registrar_colegio():
-    if 'user_email' not in session:
-        flash("Tenés que iniciar sesión para registrar un colegio")
-        return redirect('/login')
-
-    mensaje = None
-    if request.method == 'POST':
-        nombre = request.form['nombre']
-        direccion = request.form['direccion']
+    form = CourseForm()
+    if form.validate_on_submit():
+        curso = Curso(nombre=form.title.data, descripcion=form.description.data, instructor_id=session["usuario_id"])
         conn = get_db_connection()
-        cursor = conn.cursor()
-
-        # Verificamos que no esté duplicado
-        cursor.execute("SELECT * FROM Colegios WHERE nombre = %s AND direccion = %s", (nombre, direccion))
-        colegio_existente = cursor.fetchone()
-
-        if colegio_existente:
-            mensaje = "Este colegio ya está registrado y pendiente de aprobación."
-        else:
-            cursor.execute("INSERT INTO Colegios (nombre, direccion) VALUES (%s, %s)", (nombre, direccion))
-            conn.commit()
-            mensaje = "Registro enviado. El colegio será aprobado manualmente."
-
-        cursor.close()
+        curso.save(conn)
         conn.close()
+        flash("Curso agregado correctamente", "success")
+        return redirect(url_for("cursos"))
 
-    return render_template('registrar_colegio.html', mensaje=mensaje)
+    return render_template("agregar_curso.html", form=form)
 
-# Casi tan importante como registrarte es ser aprobado
-@app.route('/admin/colegios_pendientes')
-def colegios_pendientes():
-    if session.get('user_role') != 'admin':
-        return redirect('/login')
+@app.route("/cursos/editar/<int:id>", methods=["GET", "POST"])
+def editar_curso(id):
+    if "usuario_id" not in session:
+        return redirect(url_for("login"))
 
     conn = get_db_connection()
-    cursor = conn.cursor(dictionary=True)
-    cursor.execute("SELECT * FROM Colegios WHERE estado = 'pendiente'")
-    colegios = cursor.fetchall()
-    conn.close()
+    cursos = Curso.get_all(conn)
+    curso = next((c for c in cursos if c["id"] == id), None)
 
-    return render_template('admin_colegios.html', colegios=colegios)
+    form = CourseForm()
+    if request.method == "GET" and curso:
+        form.title.data = curso["nombre"]
+        form.description.data = curso["descripcion"]
 
-@app.route('/admin/aprobar_colegio/<int:id>', methods=['POST'])
-@login_required
-def aprobar_colegio(id):
-    if session.get('user_role') != 'admin':
-        return "No autorizado", 403
-    conn = get_db_connection()
-    cursor = conn.cursor()
-    cursor.execute("UPDATE Colegios SET estado = 'aprobado' WHERE id_colegio = %s", (id,))
-    conn.commit()
-    cursor.close()
-    conn.close()
-    return redirect(url_for('colegios_pendientes'))
-
-@app.route('/admin/rechazar_colegio/<int:id>', methods=['POST'])
-@login_required
-def rechazar_colegio(id):
-    if session.get('user_role') != 'admin':
-        return "No autorizado", 403
-    conn = get_db_connection()
-    cursor = conn.cursor()
-    cursor.execute("UPDATE Colegios SET estado = 'rechazado' WHERE id_colegio = %s", (id,))
-    conn.commit()
-    cursor.close()
-    conn.close()
-    return redirect(url_for('colegios_pendientes'))
-@app.route('/register', methods=['GET', 'POST'])
-def register():
-    if request.method == 'POST':
-        email = request.form['email']
-        password = request.form['password']
-        rol = request.form['rol']
-
-        conn = get_db_connection()
-        cursor = conn.cursor()
-
-        # Verificar si el usuario ya existe
-        cursor.execute("SELECT id FROM usuarios WHERE email = %s", (email,))
-        if cursor.fetchone():
-            cursor.close()
-            conn.close()
-            return render_template('register.html', error="El usuario ya existe")
-
-        # Insertar el nuevo usuario
-        cursor.execute("INSERT INTO usuarios (email, password, rol) VALUES (%s, %s, %s)",
-                        (email, password, rol))
-        conn.commit()
-        
-        cursor.execute("SELECT id FROM usuarios WHERE email = %s", (email,))
-        
-        user = cursor.fetchone()
-        # Guardar sesión
-        session['user_email'] = email
-        session['user_role'] = rol  
-        if user:
-            session['user_id'] = user[0]
-        
-        cursor.close()
+    if form.validate_on_submit():
+        c = Curso(id=id, nombre=form.title.data, descripcion=form.description.data, instructor_id=session["usuario_id"])
+        c.save(conn)
         conn.close()
+        flash("Curso actualizado correctamente", "success")
+        return redirect(url_for("cursos"))
 
-        return redirect('/registrar_colegio')
+    return render_template("editar_curso.html", form=form, curso=curso)
 
-    return render_template('register.html')
+@app.route("/cursos/eliminar/<int:id>")
+def eliminar_curso(id):
+    if "usuario_id" not in session:
+        return redirect(url_for("login"))
 
+    conn = get_db_connection()
+    Curso.delete(conn, id)
+    conn.close()
+    flash("Curso eliminado", "danger")
+    return redirect(url_for("cursos"))
 
-if __name__ == '__main__':
+# ---------------------------
+# TAREAS
+# ---------------------------
+@app.route("/tareas/nueva", methods=["GET", "POST"])
+def nueva_tarea():
+    if "usuario_id" not in session:
+        return redirect(url_for("login"))
+
+    usuario = Usuario.buscar_por_email(session["usuario_nombre"])
+    if usuario.rol != "docente":
+        flash("❌ No tienes permiso para crear tareas", "danger")
+        return redirect(url_for("dashboard"))
+
+    if request.method == "POST":
+        titulo = request.form["titulo"]
+        descripcion = request.form["descripcion"]
+        curso_id = request.form["curso_id"]
+        Tarea.crear(titulo, descripcion, curso_id, usuario.id)
+        flash("✅ Tarea creada correctamente", "success")
+        return redirect(url_for("dashboard"))
+
+    cursos = Curso.get_all(get_db_connection())
+    return render_template("nueva_tarea.html", cursos=cursos)
+
+# ---------------------------
+# RUN APP
+# ---------------------------
+if __name__ == "__main__":
     app.run(debug=True)

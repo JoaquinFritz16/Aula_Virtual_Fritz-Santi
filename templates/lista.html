@@ -1,0 +1,9 @@
+<h1>Cursos</h1>
+<a href="{{ url_for('cursos.crear_curso') }}">➕ Crear Curso</a>
+<ul>
+  {% for curso in cursos %}
+    <li>{{ curso.nombre }} - {{ curso.descripcion }}
+        <a href="{{ url_for('cursos.eliminar_curso', id=curso.id) }}">❌ Eliminar</a>
+    </li>
+  {% endfor %}
+</ul>

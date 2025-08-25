@@ -1,77 +1,178 @@
-from flask import render_template, request, redirect, url_for, flash
-from app import app, db
-from models import User, Course, Student, Content, Evaluation, Question, Answer
-from forms import LoginForm, RegistrationForm, CourseForm, ContentForm, EvaluationForm, QuestionForm, AnswerForm
-from flask_login import login_required, current_user
+from flask import Blueprint, render_template, request, redirect, url_for, session, flash
+import mysql.connector
+from db import get_db_connection
+from werkzeug.security import generate_password_hash, check_password_hash
 
-@app.route('/course/<int:course_id>/content/new', methods=['GET', 'POST'])
-@login_required
-def new_content(course_id):
-    course = Course.query.get_or_404(course_id)
-    if course.instructor_id != current_user.id:
-        flash('No tienes permiso para agregar contenido a este curso.', 'danger')
-        return redirect(url_for('course_detail', course_id=course_id))
+routes = Blueprint("routes", __name__)
 
-    form = ContentForm()
-    if form.validate_on_submit():
-        content = Content(title=form.title.data, description=form.description.data, file_path=form.file_path.data, course_id=course_id)
-        db.session.add(content)
-        db.session.commit()
-        flash('Contenido agregado exitosamente.', 'success')
-        return redirect(url_for('course_detail', course_id=course_id))
+# ---------------------------
+#  USUARIOS
+# ---------------------------
 
-    return render_template('new_content.html', form=form, course=course)
+@routes.route("/register", methods=["GET", "POST"])
+def register():
+    if request.method == "POST":
+        nombre = request.form["nombre"]
+        email = request.form["email"]
+        password = request.form["password"]
 
-@app.route('/course/<int:course_id>/evaluation/new', methods=['GET', 'POST'])
-@login_required
-def new_evaluation(course_id):
-    course = Course.query.get_or_404(course_id)
-    if course.instructor_id != current_user.id:
-        flash('No tienes permiso para agregar evaluaciones a este curso.', 'danger')
-        return redirect(url_for('course_detail', course_id=course_id))
+        conn = get_db_connection()
+        cursor = conn.cursor(dictionary=True)
 
-    form = EvaluationForm()
-    if form.validate_on_submit():
-        evaluation = Evaluation(title=form.title.data, description=form.description.data, course_id=course_id)
-        db.session.add(evaluation)
-        db.session.commit()
-        flash('Evaluación agregada exitosamente.', 'success')
-        return redirect(url_for('course_detail', course_id=course_id))
+        # verificar si ya existe
+        cursor.execute("SELECT * FROM usuarios WHERE email = %s", (email,))
+        existing_user = cursor.fetchone()
 
-    return render_template('new_evaluation.html', form=form, course=course)
+        if existing_user:
+            flash("El usuario ya existe, usa otro correo", "danger")
+            return redirect(url_for("routes.register"))
 
-@app.route('/evaluation/<int:evaluation_id>/question/new', methods=['GET', 'POST'])
-@login_required
-def new_question(evaluation_id):
-    evaluation = Evaluation.query.get_or_404(evaluation_id)
-    if evaluation.course.instructor_id != current_user.id:
-        flash('No tienes permiso para agregar preguntas a esta evaluación.', 'danger')
-        return redirect(url_for('course_detail', course_id=evaluation.course_id))
+        # registrar nuevo usuario
+        hashed_pw = generate_password_hash(password)
+        cursor.execute(
+            "INSERT INTO usuarios (nombre, email, password) VALUES (%s, %s, %s)",
+            (nombre, email, hashed_pw),
+        )
+        conn.commit()
+        cursor.close()
+        conn.close()
 
-    form = QuestionForm()
-    if form.validate_on_submit():
-        question = Question(text=form.text.data, evaluation_id=evaluation_id)
-        db.session.add(question)
-        db.session.commit()
-        flash('Pregunta agregada exitosamente.', 'success')
-        return redirect(url_for('evaluation_detail', evaluation_id=evaluation_id))
+        flash("Registro exitoso, ahora puedes iniciar sesión", "success")
+        return redirect(url_for("routes.login"))
 
-    return render_template('new_question.html', form=form, evaluation=evaluation)
+    return render_template("register.html")
 
-@app.route('/question/<int:question_id>/answer/new', methods=['GET', 'POST'])
-@login_required
-def new_answer(question_id):
-    question = Question.query.get_or_404(question_id)
-    if question.evaluation.course.instructor_id != current_user.id:
-        flash('No tienes permiso para agregar respuestas a esta pregunta.', 'danger')
-        return redirect(url_for('evaluation_detail', evaluation_id=question.evaluation_id))
 
-    form = AnswerForm()
-    if form.validate_on_submit():
-        answer = Answer(text=form.text.data, is_correct=form.is_correct.data, question_id=question_id)
-        db.session.add(answer)
-        db.session.commit()
-        flash('Respuesta agregada exitosamente.', 'success')
-        return redirect(url_for('evaluation_detail', evaluation_id=question.evaluation_id))
+@routes.route("/login", methods=["GET", "POST"])
+def login():
+    if request.method == "POST":
+        email = request.form["email"]
+        password = request.form["password"]
 
-    return render_template('new_answer.html', form=form, question=question)
+        conn = get_db_connection()
+        cursor = conn.cursor(dictionary=True)
+
+        cursor.execute("SELECT * FROM usuarios WHERE email = %s", (email,))
+        user = cursor.fetchone()
+
+        cursor.close()
+        conn.close()
+
+        if user and check_password_hash(user["password"], password):
+            session["user_id"] = user["id"]
+            session["nombre"] = user["nombre"]
+            flash("Bienvenido, " + user["nombre"], "success")
+            return redirect(url_for("routes.dashboard"))
+        else:
+            flash("Credenciales incorrectas", "danger")
+
+    return render_template("login.html")
+
+
+@routes.route("/logout")
+def logout():
+    session.clear()
+    flash("Has cerrado sesión", "info")
+    return redirect(url_for("routes.login"))
+
+
+# ---------------------------
+#  DASHBOARD
+# ---------------------------
+
+@routes.route("/dashboard")
+def dashboard():
+    if "user_id" not in session:
+        return redirect(url_for("routes.login"))
+
+    return render_template("dashboard.html", nombre=session["nombre"])
+
+
+# ---------------------------
+#  CURSOS
+# ---------------------------
+
+@routes.route("/cursos")
+def cursos():
+    if "user_id" not in session:
+        return redirect(url_for("routes.login"))
+
+    conn = get_db_connection()
+    cursor = conn.cursor(dictionary=True)
+    cursor.execute("SELECT * FROM cursos")
+    cursos = cursor.fetchall()
+    cursor.close()
+    conn.close()
+
+    return render_template("cursos.html", cursos=cursos)
+
+
+@routes.route("/cursos/agregar", methods=["GET", "POST"])
+def agregar_curso():
+    if "user_id" not in session:
+        return redirect(url_for("routes.login"))
+
+    if request.method == "POST":
+        nombre = request.form["nombre"]
+        descripcion = request.form["descripcion"]
+
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        cursor.execute(
+            "INSERT INTO cursos (nombre, descripcion, instructor_id) VALUES (%s, %s, %s)",
+            (nombre, descripcion, session["user_id"]),
+        )
+        conn.commit()
+        cursor.close()
+        conn.close()
+
+        flash("Curso agregado correctamente", "success")
+        return redirect(url_for("routes.cursos"))
+
+    return render_template("agregar_curso.html")
+
+
+@routes.route("/cursos/editar/<int:id>", methods=["GET", "POST"])
+def editar_curso(id):
+    if "user_id" not in session:
+        return redirect(url_for("routes.login"))
+
+    conn = get_db_connection()
+    cursor = conn.cursor(dictionary=True)
+
+    if request.method == "POST":
+        nombre = request.form["nombre"]
+        descripcion = request.form["descripcion"]
+
+        cursor.execute(
+            "UPDATE cursos SET nombre = %s, descripcion = %s WHERE id = %s",
+            (nombre, descripcion, id),
+        )
+        conn.commit()
+        cursor.close()
+        conn.close()
+        flash("Curso actualizado", "success")
+        return redirect(url_for("routes.cursos"))
+
+    cursor.execute("SELECT * FROM cursos WHERE id = %s", (id,))
+    curso = cursor.fetchone()
+    cursor.close()
+    conn.close()
+
+    return render_template("editar_curso.html", curso=curso)
+
+
+@routes.route("/cursos/eliminar/<int:id>")
+def eliminar_curso(id):
+    if "user_id" not in session:
+        return redirect(url_for("routes.login"))
+
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute("DELETE FROM cursos WHERE id = %s", (id,))
+    conn.commit()
+    cursor.close()
+    conn.close()
+
+    flash("Curso eliminado", "danger")
+    return redirect(url_for("routes.cursos"))

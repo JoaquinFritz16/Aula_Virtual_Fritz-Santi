@@ -1,30 +1,11 @@
-{% extends "./base.html" %}
+{% extends "base.html" %}
+{% block title %}Inicio - Aula Virtual{% endblock %}
 
-{% block title %}{{ data.title }}{% endblock %}
-
-{% block body %}
+{% block content %}
 <div class="text-center">
-    <h1 class="mb-3">{{ data.title }}</h1>
-    <p class="lead">{{ data.description }}</p>
+    <h1 class="mb-4">Bienvenido al Aula Virtual</h1>
+    <p class="lead">Accedé a tus cursos, materiales y evaluaciones de manera fácil y rápida.</p>
+    <a href="{{ url_for('login') }}" class="btn btn-primary">Iniciar Sesión</a>
+    <a href="{{ url_for('register') }}" class="btn btn-outline-secondary">Registrarse</a>
 </div>
-
-{% if data.number_of_sports > 0 %}
-    <div class="row">
-        {% for sport in deportes %}
-        <div class="col-md-4">
-            <div class="card mb-3 shadow-sm">
-                <a href="/{{ sport.name | lower }}" style="text-decoration: none; color: inherit;">
-                    <img src="{{ sport.image }}" class="card-img-top" alt="Imagen de {{ sport.name }}" style="height: 300px; object-fit: cover;">
-                    <div class="card-body">
-                        <h5 class="card-title">{{ sport.name }}</h5>
-                        <p class="card-text">Conocé más sobre el torneo de {{ sport.name }}.</p>
-                    </div>
-                </a>
-            </div>
-        </div>
-        {% endfor %}
-    </div>
-{% else %}
-    <p>No hay deportes disponibles.</p>
-{% endif %}
 {% endblock %}

@@ -1,27 +1,21 @@
 {% extends "base.html" %}
+{% block title %}Login - Aula Virtual{% endblock %}
 
-{% block title %}Iniciar Sesión{% endblock %}
-
-{% block body %}
+{% block content %}
 <div class="row justify-content-center">
-  <div class="col-md-6">
-    <h2 class="mb-4">Iniciar Sesión</h2>
-    {% if error %}
-      <div class="alert alert-danger">{{ error }}</div>
-    {% endif %}
-    <form method="POST" action="/login">
-      <div class="mb-3">
-        <label for="email" class="form-label">Correo electrónico</label>
-        <input type="email" class="form-control" id="email" name="email" required>
-      </div>
-      <div class="mb-3">
-        <label for="password" class="form-label">Contraseña</label>
-        <input type="password" class="form-control" id="password" name="password" required>
-      </div>
-      <button type="submit" class="btn btn-dark">Ingresar</button>
-      <a href="/register" class="btn btn-link">¿No tenés cuenta? Registrate</a>
-    </form>
-  </div>
+    <div class="col-md-6">
+        <h2 class="mb-4 text-center">Iniciar Sesión</h2>
+        <form method="POST" action="{{ url_for('login') }}">
+            <div class="mb-3">
+                <label for="email" class="form-label">Correo electrónico</label>
+                <input type="email" class="form-control" id="email" name="email" required>
+            </div>
+            <div class="mb-3">
+                <label for="password" class="form-label">Contraseña</label>
+                <input type="password" class="form-control" id="password" name="password" required>
+            </div>
+            <button type="submit" class="btn btn-primary w-100">Ingresar</button>
+        </form>
+    </div>
 </div>
 {% endblock %}
-    
