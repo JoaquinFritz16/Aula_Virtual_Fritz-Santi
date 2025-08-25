@@ -1,3 +1,4 @@
+-- Active: 1756120724278@@127.0.0.1@3306@aula_virtual
 drop database if exists aula_virtual;
 create database aula_virtual;
 USE aula_virtual;
@@ -25,3 +26,6 @@ CREATE TABLE tareas (
     FOREIGN KEY (curso_id) REFERENCES cursos(id),
     FOREIGN KEY (docente_id) REFERENCES usuarios(id)
 );
+insert into usuarios (nombre, email, password, rol) values
+('Admin', 'admin@example.com', 'admin123', 'admin');
+select * from usuarios;
