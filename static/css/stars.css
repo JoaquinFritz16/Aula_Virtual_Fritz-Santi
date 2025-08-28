@@ -2,7 +2,8 @@ html, body {
   height: 100%;
   margin: 0;
   background: radial-gradient(ellipse at bottom, #1B2735 0%, #090A0F 100%);
-  overflow: hidden;
+  overflow-x: hidden;
+  overflow-y: auto;
 }
 
 /* Estrellas pequeñas */
@@ -84,4 +85,25 @@ html, body {
 @keyframes animStar {
   from { transform: translateY(0px); }
   to { transform: translateY(-2000px); }
+}
+.container {
+  position: relative;
+  z-index: 2; /* Para que esté encima de las estrellas */
+}
+
+.card {
+    border-radius: 15px;
+    background: rgba(255, 255, 255, 0.05);
+    color: white;
+    backdrop-filter: blur(10px);
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.7);
+}
+
+.btn-success, .btn-primary {
+    width: 100%;
 }

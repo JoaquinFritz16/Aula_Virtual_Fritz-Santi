@@ -108,7 +108,7 @@ def cursos():
 
 
 @routes.route("/cursos/crear", methods=["GET", "POST"])
-def crear_curso():
+def agregar_curso():
     if "user_id" not in session:
         return redirect(url_for("routes.login"))
 
@@ -129,7 +129,7 @@ def crear_curso():
         flash("Curso agregado correctamente", "success")
         return redirect(url_for("routes.cursos"))
 
-    return render_template("crear_curso.html")
+    return render_template("agregar_curso.html")
 
 
 @routes.route("/cursos/editar/<int:id>", methods=["GET", "POST"])

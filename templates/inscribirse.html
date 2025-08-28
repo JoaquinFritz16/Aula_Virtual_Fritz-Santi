@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+{% block title %}Inscribirse{% endblock %}
+{% block content %}
+<h2>Inscribirse en el curso: {{ curso.nombre }}</h2>
+<p>{{ curso.descripcion }}</p>
+
+<form method="post" action="{{ url_for('inscribirse_curso', curso_id=curso.id) }}">
+    <button type="submit" class="btn btn-success">Inscribirse</button>
+</form>
+{% endblock %}

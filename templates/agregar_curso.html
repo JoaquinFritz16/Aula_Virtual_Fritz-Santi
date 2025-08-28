@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Crear Curso</h1>
+<form method="POST">
+    {{ form.hidden_tag() }}
+    <div>
+        {{ form.title.label }}<br>
+        {{ form.title(size=50) }}
+    </div>
+    <div>
+        {{ form.description.label }}<br>
+        {{ form.description(cols=50, rows=5) }}
+    </div>
+    <button type="submit">Guardar</button>
+</form>
+{% endblock %}

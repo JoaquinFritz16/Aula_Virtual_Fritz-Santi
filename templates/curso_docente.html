@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+{% block title %}Curso - Aula Virtual{% endblock %}
+
+{% block content %}
+<h2>{{ curso.nombre }}</h2>
+<p>{{ curso.descripcion }}</p>
+
+<h3>Estudiantes inscritos</h3>
+{% if estudiantes %}
+<ul>
+    {% for alumno in estudiantes %}
+    <li>{{ alumno.nombre }} ({{ alumno.email }})</li>
+    {% endfor %}
+</ul>
+{% else %}
+<p>No hay estudiantes inscritos todavía.</p>
+{% endif %}
+<h3>Enviar notificación a un estudiante</h3>
+<form method="POST" action="{{ url_for('enviar_notificacion', curso_id=curso.id) }}">
+    <div class="mb-3">
+        <select name="usuario_id" class="form-select" required>
+            <option value="">Seleccionar estudiante</option>
+            {% for alumno in estudiantes %}
+            <option value="{{ alumno.id }}">{{ alumno.nombre }} ({{ alumno.email }})</option>
+            {% endfor %}
+        </select>
+    </div>
+    <div class="mb-3">
+        <input type="text" name="mensaje" class="form-control" placeholder="Mensaje" required>
+    </div>
+    <button type="submit" class="btn btn-info">Enviar</button>
+</form>
+<h3>Tareas del curso</h3>
+{% if tareas %}
+<ul>
+    {% for tarea in tareas %}
+    <li>{{ tarea.titulo }} - {{ tarea.descripcion }}</li>
+    {% endfor %}
+</ul>
+{% else %}
+<p>No hay tareas creadas.</p>
+{% endif %}
+
+<a href="{{ url_for('editar_curso', id=curso.id) }}" class="btn btn-warning">Editar Curso</a>
+<a href="{{ url_for('cursos') }}" class="btn btn-secondary">Volver a mis cursos</a>
+<h3>Inscribir nuevo estudiante</h3>
+<form method="POST" action="{{ url_for('curso_inscribir', curso_id=curso.id) }}">
+    <div class="mb-3">
+        <input type="email" name="email" class="form-control" placeholder="Email del alumno" required>
+    </div>
+    <button type="submit" class="btn btn-primary">Inscribir</button>
+</form>
+
+{% endblock %}

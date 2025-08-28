@@ -3,13 +3,13 @@ from wtforms import StringField, PasswordField, TextAreaField, BooleanField, Fil
 from wtforms.validators import DataRequired, Email, Length
 
 class LoginForm(FlaskForm):
-    username = StringField('Username', validators=[DataRequired()])
-    password = PasswordField('Password', validators=[DataRequired()])
+    email = StringField('Correo electrónico', validators=[DataRequired(), Email()])
+    password = PasswordField('Contraseña', validators=[DataRequired()])
 
 class RegistrationForm(FlaskForm):
-    username = StringField('Username', validators=[DataRequired()])
-    email = StringField('Email', validators=[DataRequired(), Email()])
-    password = PasswordField('Password', validators=[DataRequired(), Length(min=6)])
+    nombre = StringField('Nombre', validators=[DataRequired(), Length(min=2, max=100)])
+    email = StringField('Correo electrónico', validators=[DataRequired(), Email()])
+    password = PasswordField('Contraseña', validators=[DataRequired(), Length(min=6)])
 
 class CourseForm(FlaskForm):
     title = StringField('Title', validators=[DataRequired()])

@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% block title %}Tareas{% endblock %}
+{% block content %}
+<h2>Tareas del curso: {{ curso.nombre }}</h2>
+
+{% if tareas %}
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>Título</th>
+                <th>Descripción</th>
+                <th>Entrega</th>
+                <th>Nota</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for tarea in tareas %}
+            <tr>
+                <td>{{ tarea.titulo }}</td>
+                <td>{{ tarea.descripcion }}</td>
+                <td>{{ tarea.fecha_entrega }}</td>
+                <td>
+                    {% if calificaciones[tarea.id] %}
+                        {{ calificaciones[tarea.id].valor }}
+                    {% else %}
+                        Pendiente
+                    {% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+{% else %}
+    <p>No hay tareas asignadas aún.</p>
+{% endif %}
+{% endblock %}

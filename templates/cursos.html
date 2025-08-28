@@ -1,31 +1,23 @@
 {% extends "base.html" %}
-{% block title %}Cursos - Aula Virtual{% endblock %}
-
 {% block content %}
-<h2 class="mb-4">Lista de Cursos</h2>
-<a href="{{ url_for('crear_curso') }}" class="btn btn-primary mb-3">➕ Nuevo Curso</a>
-
-<table class="table table-striped">
-    <thead>
-        <tr>
-            <th>ID</th>
-            <th>Nombre</th>
-            <th>Descripción</th>
-            <th>Acciones</th>
-        </tr>
-    </thead>
-    <tbody>
-        {% for curso in cursos %}
-        <tr>
-            <td>{{ curso[0] }}</td>
-            <td>{{ curso[1] }}</td>
-            <td>{{ curso[2] }}</td>
-            <td>
-                <a href="{{ url_for('editar_curso', id=curso[0]) }}" class="btn btn-warning btn-sm">Editar</a>
-                <a href="{{ url_for('eliminar_curso', id=curso[0]) }}" class="btn btn-danger btn-sm">Eliminar</a>
-            </td>
-        </tr>
-        {% endfor %}
-    </tbody>
-</table>
+<h1 class="text-white mb-4">Cursos Disponibles</h1>
+<div class="row">
+    {% for curso in cursos %}
+    <div class="col-md-4 mb-4">
+        <div class="card shadow-lg h-100">
+            <div class="card-body">
+                <h5 class="card-title">{{ curso.nombre }}</h5>
+                <p class="card-text">{{ curso.descripcion }}</p>
+                {% if usuario.rol == 'estudiante' %}
+                    <form method="POST" action="{{ url_for('inscribirse_curso', curso_id=curso.id) }}">
+                        <button type="submit" class="btn btn-success">Inscribirse</button>
+                    </form>
+                {% else %}
+                    <a href="{{ url_for('curso_detalle', curso_id=curso.id) }}" class="btn btn-primary">Ver curso</a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
 {% endblock %}

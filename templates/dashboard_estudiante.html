@@ -1,29 +1,45 @@
 {% extends "base.html" %}
 {% block content %}
-<div class="container mt-4">
-  <h2>👨‍🎓 Bienvenido, {{ usuario.nombre }}</h2>
-  <p class="text-muted">Panel del estudiante</p>
+<h3>Bienvenido {{ usuario.nombre }}</h3>
 
-  <div class="card mt-3">
-    <div class="card-body">
-      <h5 class="card-title">Mis cursos</h5>
-      <ul>
-        <li>Curso 1 (ejemplo)</li>
-        <li>Curso 2 (ejemplo)</li>
-      </ul>
-    </div>
-  </div>
-
-  <div class="card mt-3">
-    <div class="card-body">
-      <h5 class="card-title">Tareas asignadas</h5>
-      <ul>
-        <li>Tarea 1 - Matemáticas</li>
-        <li>Tarea 2 - Historia</li>
-      </ul>
-    </div>
-  </div>
-
-  <a href="{{ url_for('logout') }}" class="btn btn-danger mt-3">🚪 Cerrar sesión</a>
+<!-- Notificaciones -->
+<div class="mb-3">
+  <a href="{{ url_for('ver_notificaciones') }}" class="btn btn-outline-secondary">
+    🔔 Notificaciones <span class="badge bg-danger">{{ notifs|length }}</span>
+  </a>
 </div>
+  <span class="badge bg-danger">{{ notifs_count }}</span>
+
+<!-- Cursos -->
+<div class="row">
+  {% for curso in cursos %}
+  <div class="col-md-4">
+    <div class="card mb-3">
+      <div class="card-body">
+        <h5 class="card-title">{{ curso.nombre }}</h5>
+        <p class="card-text">{{ curso.descripcion[:120] }}...</p>
+        <!-- mostrar promedio rápido si existe -->
+        <a href="{{ url_for('curso_detalle', curso_id=curso.id) }}" class="btn btn-primary">Ir al curso</a>
+      </div>
+    </div>
+  </div>
+  {% else %}
+  <p>No estás inscrito en ningún curso.</p>
+  {% endfor %}
+</div>
+
+<!-- Resumen de calificaciones -->
+<h4>Tus calificaciones recientes</h4>
+<table class="table">
+  <thead><tr><th>Curso</th><th>Tarea</th><th>Nota</th></tr></thead>
+  <tbody>
+  {% for c in calificaciones %}
+    <tr>
+      <td>{{ c.curso_id }}</td>
+      <td>{{ c.tarea_id or 'N/A' }}</td>
+      <td>{{ c.valor }}</td>
+    </tr>
+  {% endfor %}
+  </tbody>
+</table>
 {% endblock %}
