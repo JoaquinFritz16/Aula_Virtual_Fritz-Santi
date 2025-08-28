@@ -1,9 +1,8 @@
-# check_user_hash.py
 from models import Usuario
 from werkzeug.security import check_password_hash
 
-email = "joaquinfritz16@gmail.com"   # reemplazá por el email del usuario que registraste por web
-password_prueba = "123456"   # la contraseña que escribiste al registrar
+email = "joaquinfritz16@gmail.com"  
+password_prueba = "123456" 
 
 u = Usuario.buscar_por_email(email)
 if not u:

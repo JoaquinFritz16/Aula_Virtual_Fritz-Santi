@@ -1,4 +1,3 @@
-# models.py
 from db import get_db_connection
 
 class Usuario:
@@ -60,7 +59,7 @@ class Curso:
             )
             conn.commit()
             self.id = cursor.lastrowid
-        else:  # actualizar existente
+        else:  
             cursor.execute(
                 "UPDATE cursos SET nombre=%s, descripcion=%s, instructor_id=%s WHERE id=%s",
                 (self.nombre, self.descripcion, self.instructor_id, self.id)

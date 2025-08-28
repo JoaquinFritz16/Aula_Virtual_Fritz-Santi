@@ -1,10 +1,9 @@
-# test_login.py
 from werkzeug.security import generate_password_hash, check_password_hash
 from models import Usuario
 
 print("=== PRUEBAS DE USUARIO ===")
 
-# 1. Crear un usuario de prueba
+
 password = "123456"
 hashed = generate_password_hash(password)
 

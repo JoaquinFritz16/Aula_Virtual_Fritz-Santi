@@ -12,9 +12,7 @@ app.secret_key = "clave_secreta_segura"
 app.config['SESSION_PERMANENT'] = True
 app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(days=7)
 
-# ---------------------------
-# INDEX
-# ---------------------------
+
 def login_required(f):
     @wraps(f)
     def wrapper(*args, **kwargs):
@@ -41,9 +39,6 @@ def roles_required(*allowed_roles):
 def index():
     return render_template("index.html")
 
-# ---------------------------
-# REGISTER
-# ---------------------------
 @app.route("/register", methods=["GET", "POST"])
 def register():
     form = RegistrationForm()
@@ -58,9 +53,6 @@ def register():
     if form.errors:
         flash("Revisa los datos del formulario.", "danger")
     return render_template("register.html", form=form)
-# ---------------------------
-# LOGIN
-# ---------------------------
 @app.route("/login", methods=["GET", "POST"])
 def login():
     form = LoginForm()
@@ -78,18 +70,12 @@ def login():
         flash("Revisa los datos del formulario.", "danger")
     return render_template("login.html", form=form)
 
-# ---------------------------
-# LOGOUT
-# ---------------------------
 @app.route("/logout")
 def logout():
     session.clear()
     flash("Sesión cerrada correctamente", "info")
     return redirect(url_for("login"))
 
-# ---------------------------
-# DASHBOARD
-# ---------------------------
 @app.route("/dashboard")
 @login_required
 def dashboard():
@@ -104,9 +90,8 @@ def dashboard():
         cursor.close()
         conn.close()
         return render_template("dashboard_docente.html", usuario=usuario, cursos=cursos)
-    # estudiante
+
     cursos = Inscripcion.obtener_cursos_por_usuario(usuario.id)
-    # resumen de calificaciones (podés mejorar con avg/progreso)
     calificaciones = Calificacion.obtener_por_estudiante(usuario.id)
     notifs = Notificacion.obtener_no_leidas(usuario.id)
     notifs_count = len(Notificacion.obtener_no_leidas(usuario.id))
@@ -114,22 +99,19 @@ def dashboard():
     return render_template("dashboard_estudiante.html", usuario=usuario, cursos=cursos, calificaciones=calificaciones, notifs=notifs)
 
 
-# ---------------------------
-# CURSOS
-# ---------------------------
 @app.route("/cursos")
 @login_required
 def cursos():
     usuario = Usuario.buscar_por_id(session["usuario_id"])
     conn = get_db_connection()
     if usuario.rol == "docente":
-        # solo cursos donde es instructor
+
         cursor = conn.cursor(dictionary=True)
         cursor.execute("SELECT * FROM cursos WHERE instructor_id=%s", (usuario.id,))
         cursos = cursor.fetchall()
         cursor.close()
     else:
-        # todos los cursos disponibles para estudiantes
+
         cursos = Curso.get_all(conn)
     conn.close()
     return render_template("cursos.html", cursos=cursos, usuario=usuario)
@@ -143,9 +125,9 @@ def curso_detalle(curso_id):
     cursor.execute("SELECT * FROM cursos WHERE id=%s", (curso_id,))
     curso = cursor.fetchone()
     cursor.close()
-    # verificar permisos: si es docente del curso o está inscripto
+
     if usuario.rol == "docente" and curso["instructor_id"] == usuario.id:
-        # docente: ver estudiantes y tareas
+
         estudiantes = Inscripcion.obtener_estudiantes_por_curso(curso_id)
         conn = get_db_connection()
         cursor = conn.cursor(dictionary=True)
@@ -154,7 +136,7 @@ def curso_detalle(curso_id):
         cursor.close()
         return render_template("curso_docente.html", curso=curso, tareas=tareas, estudiantes=estudiantes)
     else:
-        # estudiante: comprobar inscripción
+        
         conn = get_db_connection()
         cursor = conn.cursor()
         cursor.execute("SELECT 1 FROM inscripciones WHERE usuario_id=%s AND curso_id=%s", (usuario.id, curso_id))
@@ -163,7 +145,7 @@ def curso_detalle(curso_id):
         if not ok:
             flash("No estás inscrito en este curso.", "danger")
             return redirect(url_for("dashboard"))
-        # mostrar tareas y notas del estudiante en ese curso
+        
         conn = get_db_connection()
         cursor = conn.cursor(dictionary=True)
         cursor.execute("SELECT * FROM tareas WHERE curso_id=%s ORDER BY fecha_entrega DESC", (curso_id,))
@@ -212,7 +194,7 @@ def ver_notificaciones():
 def agregar_curso():
     form = CourseForm()
     if form.validate_on_submit():
-        # Aquí creamos el curso usando los datos del formulario
+        
         curso = Curso(
             nombre=form.title.data,
             descripcion=form.description.data,
@@ -262,9 +244,8 @@ def eliminar_curso(id):
     flash("Curso eliminado", "danger")
     return redirect(url_for("cursos"))
 
-# ---------------------------
-# TAREAS
-# ---------------------------
+
+
 @app.route("/tareas/nueva", methods=["GET", "POST"])
 def nueva_tarea():
     if "usuario_id" not in session:
@@ -302,8 +283,6 @@ def enviar_notificacion(curso_id):
     Notificacion.crear(mensaje, usuario_id=usuario_id, tipo="mensaje", url_referencia=f"/cursos/{curso_id}")
     flash("Notificación enviada", "success")
     return redirect(url_for("curso_detalle", curso_id=curso_id))
-# ---------------------------
-# RUN APP
-# ---------------------------
+
 if __name__ == "__main__":
     app.run(debug=True)

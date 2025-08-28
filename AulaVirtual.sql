@@ -26,7 +26,7 @@ CREATE TABLE tareas (
     FOREIGN KEY (curso_id) REFERENCES cursos(id),
     FOREIGN KEY (docente_id) REFERENCES usuarios(id)
 );
--- 1) Inscripciones (matrícula alumno-curso)
+
 CREATE TABLE IF NOT EXISTS inscripciones (
   id INT AUTO_INCREMENT PRIMARY KEY,
   usuario_id INT NOT NULL,
@@ -37,12 +37,12 @@ CREATE TABLE IF NOT EXISTS inscripciones (
   FOREIGN KEY (curso_id) REFERENCES cursos(id) ON DELETE CASCADE
 );
 
--- 2) Extender tareas: tipo y fecha_entrega
+
 ALTER TABLE tareas
   ADD COLUMN tipo ENUM('tarea','examen') DEFAULT 'tarea',
   ADD COLUMN fecha_entrega DATETIME NULL;
 
--- 3) Calificaciones
+
 CREATE TABLE IF NOT EXISTS calificaciones (
   id INT AUTO_INCREMENT PRIMARY KEY,
   estudiante_id INT NOT NULL,
@@ -56,10 +56,10 @@ CREATE TABLE IF NOT EXISTS calificaciones (
   FOREIGN KEY (tarea_id) REFERENCES tareas(id) ON DELETE SET NULL
 );
 
--- 4) Notificaciones
+
 CREATE TABLE IF NOT EXISTS notificaciones (
   id INT AUTO_INCREMENT PRIMARY KEY,
-  usuario_id INT NULL, -- NULL = notificación global
+  usuario_id INT NULL, 
   tipo VARCHAR(50),
   mensaje TEXT NOT NULL,
   leido TINYINT(1) DEFAULT 0,
