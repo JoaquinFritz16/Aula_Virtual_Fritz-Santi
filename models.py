@@ -50,33 +50,57 @@ class Curso:
         self.descripcion = descripcion
         self.instructor_id = instructor_id
 
-    def save(self, conn):
+    def save(self):
+        conn = get_db_connection()
         cursor = conn.cursor()
-        if self.id is None:  # crear nuevo
+        if self.id is None:  # crear nuevo curso
             cursor.execute(
                 "INSERT INTO cursos (nombre, descripcion, instructor_id) VALUES (%s, %s, %s)",
                 (self.nombre, self.descripcion, self.instructor_id)
             )
             conn.commit()
             self.id = cursor.lastrowid
-        else:  
+        else:  # actualizar curso existente
             cursor.execute(
                 "UPDATE cursos SET nombre=%s, descripcion=%s, instructor_id=%s WHERE id=%s",
                 (self.nombre, self.descripcion, self.instructor_id, self.id)
             )
             conn.commit()
-        
+        cursor.close()
+        conn.close()
+
+
+    # Obtener todos los cursos
     @staticmethod
-    def get_all(conn):
+    def get_all():
+        conn = get_db_connection()
         cursor = conn.cursor(dictionary=True)
         cursor.execute("SELECT * FROM cursos")
-        return cursor.fetchall()
+        cursos = cursor.fetchall()
+        cursor.close()
+        conn.close()
+        return cursos
 
+    # Obtener cursos por docente
     @staticmethod
-    def delete(conn, id):
+    def obtener_por_docente(docente_id):
+        conn = get_db_connection()
+        cursor = conn.cursor(dictionary=True)
+        cursor.execute("SELECT * FROM cursos WHERE instructor_id = %s", (docente_id,))
+        cursos = cursor.fetchall()
+        cursor.close()
+        conn.close()
+        return cursos
+
+    # Eliminar curso
+    @staticmethod
+    def delete(id):
+        conn = get_db_connection()
         cursor = conn.cursor()
-        cursor.execute("DELETE FROM cursos WHERE id=%s", (id,))
+        cursor.execute("DELETE FROM cursos WHERE id = %s", (id,))
         conn.commit()
+        cursor.close()
+        conn.close()
 class Tarea:
     def __init__(self, id, titulo, descripcion, curso_id, docente_id):
         self.id = id
@@ -110,38 +134,54 @@ class Inscripcion:
     def inscribir(usuario_id, curso_id):
         conn = get_db_connection()
         cursor = conn.cursor()
-        cursor.execute("INSERT IGNORE INTO inscripciones (usuario_id, curso_id) VALUES (%s, %s)", (usuario_id, curso_id))
+        cursor.execute("""
+            INSERT INTO inscripciones (usuario_id, curso_id, estado)
+            VALUES (%s, %s, 'pendiente')
+            ON DUPLICATE KEY UPDATE estado = 'pendiente'
+        """, (usuario_id, curso_id))
         conn.commit()
         cursor.close()
         conn.close()
 
     @staticmethod
-    def obtener_cursos_por_usuario(usuario_id):
+    def actualizar_estado(inscripcion_id, nuevo_estado):
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        cursor.execute("UPDATE inscripciones SET estado=%s WHERE id=%s", (nuevo_estado, inscripcion_id))
+        conn.commit()
+        cursor.close()
+        conn.close()
+
+    @staticmethod
+    def obtener_pendientes_por_curso(curso_id):
         conn = get_db_connection()
         cursor = conn.cursor(dictionary=True)
         cursor.execute("""
-            SELECT c.* FROM cursos c
-            JOIN inscripciones i ON c.id = i.curso_id
-            WHERE i.usuario_id = %s
-        """, (usuario_id,))
+            SELECT i.id, u.nombre, u.email 
+            FROM inscripciones i
+            JOIN usuarios u ON u.id = i.usuario_id
+            WHERE i.curso_id = %s AND i.estado = 'pendiente'
+        """, (curso_id,))
         rows = cursor.fetchall()
         cursor.close()
         conn.close()
         return rows
 
     @staticmethod
-    def obtener_estudiantes_por_curso(curso_id):
+    def obtener_estudiantes_aceptados(curso_id):
         conn = get_db_connection()
         cursor = conn.cursor(dictionary=True)
         cursor.execute("""
-            SELECT u.* FROM usuarios u
+            SELECT u.* 
+            FROM usuarios u
             JOIN inscripciones i ON u.id = i.usuario_id
-            WHERE i.curso_id = %s
+            WHERE i.curso_id = %s AND i.estado = 'aceptado'
         """, (curso_id,))
         rows = cursor.fetchall()
         cursor.close()
         conn.close()
         return rows
+
 
 class Calificacion:
     @staticmethod

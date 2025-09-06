@@ -1,0 +1,118 @@
+/* =======================
+   Variables por defecto
+   ======================= */
+:root {
+  --bg-color: #f8f9fa;
+  --text-color: #212529;
+  --primary-color: #0d6efd;
+  --secondary-color: #6c757d;
+  --accent-color: #dc3545;
+
+  --sidebar-bg: var(--primary-color);
+  --sidebar-text: #ffffff;
+  --sidebar-hover: rgba(255, 255, 255, 0.2);
+}
+
+/* =======================
+   Tema Oscuro
+   ======================= */
+[data-theme="dark"] {
+  --bg-color: #121212;
+  --text-color: #e9ecef;
+  --primary-color: #1f6feb;
+  --secondary-color: #495057;
+  --accent-color: #ff4d6d;
+
+  --sidebar-bg: #1f1f1f;
+  --sidebar-text: #e9ecef;
+  --sidebar-hover: #333333;
+}
+
+/* =======================
+   Tema Azul
+   ======================= */
+[data-theme="blue"] {
+  --bg-color: #e9f2ff;
+  --text-color: #0d1b2a;
+  --primary-color: #1f3c88;
+  --secondary-color: #415a77;
+  --accent-color: #0dcaf0;
+
+  --sidebar-bg: #1f3c88;
+  --sidebar-text: #ffffff;
+  --sidebar-hover: #3b5ba9;
+}
+
+/* =======================
+   Tema Rojo
+   ======================= */
+[data-theme="red"] {
+  --bg-color: #fff5f5;
+  --text-color: #2b0000;
+  --primary-color: #8b0000;
+  --secondary-color: #a94442;
+  --accent-color: #ff6f61;
+
+  --sidebar-bg: #8b0000;
+  --sidebar-text: #ffffff;
+  --sidebar-hover: #a93226;
+}
+
+.theme-switcher {
+  background-color: var(--bg-color);
+  color: var(--text-color);
+  border-radius: 12px;
+  padding: 0.5rem;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+  transition: background 0.3s, color 0.3s;
+}
+
+/* =======================
+   Estilos globales
+   ======================= */
+body {
+  background-color: var(--bg-color);
+  color: var(--text-color);
+  font-family: "Segoe UI", Roboto, sans-serif;
+  transition: background 0.3s, color 0.3s;
+}
+
+/* Sidebar */
+.sidebar {
+  width: 220px;
+  min-height: 100vh;
+  background-color: var(--sidebar-bg);
+  transition: background 0.3s;
+}
+
+.sidebar .nav-link {
+  color: var(--sidebar-text);
+  border-radius: 8px;
+  padding: 10px 15px;
+  transition: background 0.3s, transform 0.2s;
+}
+
+.sidebar .nav-link:hover {
+  background-color: var(--sidebar-hover);
+  transform: translateX(5px);
+}
+
+/* Botones */
+.btn-primary {
+  background-color: var(--primary-color);
+  border: none;
+  transition: background 0.3s;
+}
+
+.btn-primary:hover {
+  background-color: var(--accent-color);
+}
+
+/* Tarjetas y contenedores */
+.card, .content {
+  background-color: var(--bg-color);
+  color: var(--text-color);
+  border-radius: 12px;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+  transition: background 0.3s, color 0.3s;
+}

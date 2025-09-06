@@ -50,5 +50,19 @@
     </div>
     <button type="submit" class="btn btn-primary">Inscribir</button>
 </form>
+<h3>Solicitudes de inscripción</h3>
+{% if pendientes %}
+  <ul>
+  {% for s in pendientes %}
+    <li>
+      {{ s.nombre }} ({{ s.email }})
+      <a href="{{ url_for('routes.gestionar_inscripcion', inscripcion_id=s.id, accion='aceptado') }}" class="btn btn-success btn-sm">Aceptar</a>
+      <a href="{{ url_for('routes.gestionar_inscripcion', inscripcion_id=s.id, accion='rechazado') }}" class="btn btn-danger btn-sm">Rechazar</a>
+    </li>
+  {% endfor %}
+  </ul>
+{% else %}
+  <p>No hay solicitudes pendientes.</p>
+{% endif %}
 
 {% endblock %}

@@ -1,16 +1,20 @@
 {% extends "base.html" %}
+
 {% block content %}
-<h1>Crear Curso</h1>
+<h2 class="mb-4">Crear Curso</h2>
+
 <form method="POST">
-    {{ form.hidden_tag() }}
-    <div>
-        {{ form.title.label }}<br>
-        {{ form.title(size=50) }}
+    <div class="mb-3">
+        <label for="nombre" class="form-label">Nombre del curso</label>
+        <input type="text" class="form-control" id="nombre" name="nombre" placeholder="Ingresa el nombre del curso" required>
     </div>
-    <div>
-        {{ form.description.label }}<br>
-        {{ form.description(cols=50, rows=5) }}
+
+    <div class="mb-3">
+        <label for="descripcion" class="form-label">Descripción</label>
+        <textarea class="form-control" id="descripcion" name="descripcion" rows="4" placeholder="Describe el curso"></textarea>
     </div>
-    <button type="submit">Guardar</button>
+
+    <button type="submit" class="btn btn-success">Guardar</button>
+    <a href="{{ url_for('cursos') }}" class="btn btn-secondary">Cancelar</a>
 </form>
 {% endblock %}

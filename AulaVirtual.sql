@@ -73,3 +73,9 @@ insert into usuarios (nombre, email, password, rol) values
 select * from usuarios;
 INSERT INTO usuarios (nombre, email, password, rol) 
 VALUES ('ProfesorX', 'profx@mail.com', 'scrypt:32768:8:1$vtmaXXXm9TjC933n$6b6f33377d0513831a72df9c3b40d666824ff5bc8c2fd855d61d5d5cfa6ea2c57af2eb3c1e830e158a7378e837437d6986724530b3439ce91851f274f0bfbd6f', 'docente');
+
+ALTER TABLE inscripciones
+ADD COLUMN estado ENUM('pendiente','aceptado','rechazado') DEFAULT 'pendiente';
+ALTER TABLE cursos
+ADD COLUMN docente_id INT,
+ADD FOREIGN KEY (docente_id) REFERENCES usuarios(id);

@@ -2,12 +2,11 @@ from flask import Blueprint, render_template, request, redirect, url_for, sessio
 import mysql.connector
 from db import get_db_connection
 from werkzeug.security import generate_password_hash, check_password_hash
+from models import Inscripcion, Curso
 
 routes = Blueprint("routes", __name__)
 
-# ---------------------------
-#  USUARIOS
-# ---------------------------
+
 
 @routes.route("/register", methods=["GET", "POST"])
 def register():
@@ -19,7 +18,7 @@ def register():
         conn = get_db_connection()
         cursor = conn.cursor(dictionary=True)
 
-        # verificar si ya existe
+        
         cursor.execute("SELECT * FROM usuarios WHERE email = %s", (email,))
         existing_user = cursor.fetchone()
 
@@ -27,7 +26,7 @@ def register():
             flash("El usuario ya existe, usa otro correo", "danger")
             return redirect(url_for("routes.register"))
 
-        # registrar nuevo usuario
+        
         hashed_pw = generate_password_hash(password)
         cursor.execute(
             "INSERT INTO usuarios (nombre, email, password) VALUES (%s, %s, %s)",
@@ -76,9 +75,6 @@ def logout():
     return redirect(url_for("routes.login"))
 
 
-# ---------------------------
-#  DASHBOARD
-# ---------------------------
 
 @routes.route("/dashboard")
 def dashboard():
@@ -88,9 +84,6 @@ def dashboard():
     return render_template("dashboard.html", nombre=session["nombre"])
 
 
-# ---------------------------
-#  CURSOS
-# ---------------------------
 
 @routes.route("/cursos")
 def cursos():
@@ -107,29 +100,29 @@ def cursos():
     return render_template("cursos.html", cursos=cursos)
 
 
-@routes.route("/cursos/crear", methods=["GET", "POST"])
-def agregar_curso():
-    if "user_id" not in session:
-        return redirect(url_for("routes.login"))
+# @routes.route("/cursos/crear", methods=["GET", "POST"])
+# def agregar_curso():
+#     if "user_id" not in session:
+#         return redirect(url_for("routes.login"))
 
-    if request.method == "POST":
-        nombre = request.form["nombre"]
-        descripcion = request.form["descripcion"]
+#     if request.method == "POST":
+#         nombre = request.form["nombre"]
+#         descripcion = request.form["descripcion"]
 
-        conn = get_db_connection()
-        cursor = conn.cursor()
-        cursor.execute(
-            "INSERT INTO cursos (nombre, descripcion, instructor_id) VALUES (%s, %s, %s)",
-            (nombre, descripcion, session["user_id"]),
-        )
-        conn.commit()
-        cursor.close()
-        conn.close()
+#         conn = get_db_connection()
+#         cursor = conn.cursor()
+#         cursor.execute(
+#             "INSERT INTO cursos (nombre, descripcion, instructor_id) VALUES (%s, %s, %s)",
+#             (nombre, descripcion, session["user_id"]),
+#         )
+#         conn.commit()
+#         cursor.close()
+#         conn.close()
 
-        flash("Curso agregado correctamente", "success")
-        return redirect(url_for("routes.cursos"))
+#         flash("Curso agregado correctamente", "success")
+#         return redirect(url_for("routes.cursos"))
 
-    return render_template("agregar_curso.html")
+#     return render_template("agregar_curso.html")
 
 
 @routes.route("/cursos/editar/<int:id>", methods=["GET", "POST"])
@@ -176,3 +169,50 @@ def eliminar_curso(id):
 
     flash("Curso eliminado", "danger")
     return redirect(url_for("routes.cursos"))
+
+# Alumno solicita inscripción
+@routes.route("/cursos/<int:curso_id>/inscribirse", methods=["POST"])
+def inscribirse_curso(curso_id):
+    if "user_id" not in session:
+        return redirect(url_for("routes.login"))
+    Inscripcion.inscribir(session["user_id"], curso_id)
+    flash("Solicitud enviada, espera aprobación del docente", "info")
+    return redirect(url_for("routes.cursos"))
+
+
+# Profesor ve solicitudes pendientes
+@routes.route("/cursos/<int:curso_id>/solicitudes")
+def solicitudes_curso(curso_id):
+    if "user_id" not in session:
+        return redirect(url_for("routes.login"))
+    pendientes = Inscripcion.obtener_pendientes_por_curso(curso_id)
+    return render_template("solicitudes.html", pendientes=pendientes, curso_id=curso_id)
+
+
+# Profesor acepta o rechaza
+@routes.route("/inscripcion/<int:inscripcion_id>/<string:accion>")
+def gestionar_inscripcion(inscripcion_id, accion):
+    if accion in ["aceptado", "rechazado"]:
+        Inscripcion.actualizar_estado(inscripcion_id, accion)
+        flash(f"Inscripción {accion}", "success")
+    return redirect(request.referrer or url_for("routes.cursos"))
+@routes.route("/curso/nuevo", methods=["GET", "POST"])
+def nuevo_curso():
+    if "user_id" not in session:
+        return redirect(url_for("login"))
+
+    if request.method == "POST":
+        nombre = request.form["nombre"]
+        descripcion = request.form["descripcion"]
+        docente_id = session["user_id"]
+
+        # Crear el curso y guardarlo
+        curso = Curso(nombre=nombre, descripcion=descripcion, instructor_id=docente_id)
+        curso.save()  # <--- ahora sí se guarda
+
+        flash("Curso creado con éxito", "success")
+        return redirect(url_for("cursos"))
+
+    return render_template("curso_form.html")
+
+

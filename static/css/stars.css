@@ -3,9 +3,12 @@ html, body {
   margin: 0;
   background: radial-gradient(ellipse at bottom, #1B2735 0%, #090A0F 100%);
   overflow-x: hidden;
-  overflow-y: auto;
+  overflow-y: hidden;
 }
-
+.wrapper {
+  min-height: 100vh;
+  overflow-y: auto; /* ✅ deja scroll SOLO si hay contenido de verdad */
+}
 /* Estrellas pequeñas */
 #stars {
   width: 1px;
