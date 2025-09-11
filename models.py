@@ -1,5 +1,7 @@
 from db import get_db_connection
 
+from db import get_db_connection
+
 class Usuario:
     def __init__(self, id, nombre, email, password, rol):
         self.id = id
@@ -131,6 +133,21 @@ class Tarea:
 
 class Inscripcion:
     @staticmethod
+    def obtener_cursos_por_usuario(usuario_id):
+        conn = get_db_connection()
+        cursor = conn.cursor(dictionary=True)
+        cursor.execute("""
+            SELECT c.*
+            FROM inscripciones i
+            JOIN cursos c ON i.curso_id = c.id
+            WHERE i.usuario_id = %s
+        """, (usuario_id,))
+        cursos = cursor.fetchall()
+        cursor.close()
+        conn.close()
+        return cursos   # 👈 faltaba este return
+
+    @staticmethod
     def inscribir(usuario_id, curso_id):
         conn = get_db_connection()
         cursor = conn.cursor()
@@ -142,6 +159,45 @@ class Inscripcion:
         conn.commit()
         cursor.close()
         conn.close()
+
+    @staticmethod
+    def actualizar_estado(inscripcion_id, nuevo_estado):
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        cursor.execute("UPDATE inscripciones SET estado=%s WHERE id=%s", (nuevo_estado, inscripcion_id))
+        conn.commit()
+        cursor.close()
+        conn.close()
+
+    @staticmethod
+    def obtener_pendientes_por_curso(curso_id):
+        conn = get_db_connection()
+        cursor = conn.cursor(dictionary=True)
+        cursor.execute("""
+            SELECT i.id, u.nombre, u.email 
+            FROM inscripciones i
+            JOIN usuarios u ON u.id = i.usuario_id
+            WHERE i.curso_id = %s AND i.estado = 'pendiente'
+        """, (curso_id,))
+        rows = cursor.fetchall()
+        cursor.close()
+        conn.close()
+        return rows
+
+    @staticmethod
+    def obtener_estudiantes_aceptados(curso_id):
+        conn = get_db_connection()
+        cursor = conn.cursor(dictionary=True)
+        cursor.execute("""
+            SELECT u.* 
+            FROM usuarios u
+            JOIN inscripciones i ON u.id = i.usuario_id
+            WHERE i.curso_id = %s AND i.estado = 'aceptado'
+        """, (curso_id,))
+        rows = cursor.fetchall()
+        cursor.close()
+        conn.close()
+
 
     @staticmethod
     def actualizar_estado(inscripcion_id, nuevo_estado):

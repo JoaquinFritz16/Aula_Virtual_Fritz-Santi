@@ -81,6 +81,7 @@ def logout():
 def dashboard():
     usuario = Usuario.buscar_por_id(session["usuario_id"])
     from models import Inscripcion, Calificacion, Notificacion
+
     if usuario.rol == "docente":
         # cursos que dicta
         conn = get_db_connection()
@@ -91,13 +92,20 @@ def dashboard():
         conn.close()
         return render_template("dashboard_docente.html", usuario=usuario, cursos=cursos)
 
+    # 👇 Esto va en un else implícito (solo si no es docente)
     cursos = Inscripcion.obtener_cursos_por_usuario(usuario.id)
     calificaciones = Calificacion.obtener_por_estudiante(usuario.id)
     notifs = Notificacion.obtener_no_leidas(usuario.id)
-    notifs_count = len(Notificacion.obtener_no_leidas(usuario.id))
-    
-    return render_template("dashboard_estudiante.html", usuario=usuario, cursos=cursos, calificaciones=calificaciones, notifs=notifs)
+    notifs_count = len(notifs)
 
+    return render_template(
+        "dashboard_estudiante.html",
+        usuario=usuario,
+        cursos=cursos,
+        calificaciones=calificaciones,
+        notifs=notifs,
+        notifs_count=notifs_count
+    )
 
 @app.route("/cursos")
 @login_required
