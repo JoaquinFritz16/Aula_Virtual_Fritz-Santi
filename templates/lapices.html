@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Lápices</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/themes.css') }}">
+</head>
+<body>
+    <h1>Lista de Lápices</h1>
+
+    <a href="{{ url_for('agregar_lapiz') }}">Agregar Lápiz</a>
+
+    {% if lapices %}
+        <ul>
+            {% for lapiz in lapices %}
+                <li>
+                    <h3>{{ lapiz.titulo }}</h3>
+                    <p>{{ lapiz.descripcion }}</p>
+                    {% if lapiz.imagen_url %}
+                        <img src="{{ lapiz.imagen_url }}" alt="{{ lapiz.titulo }}" width="150">
+                    {% endif %}
+                </li>
+            {% endfor %}
+        </ul>
+    {% else %}
+        <p>No hay lápices cargados todavía.</p>
+    {% endif %}
+</body>
+</html>

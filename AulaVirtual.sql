@@ -10,6 +10,13 @@ CREATE TABLE usuarios (
     password VARCHAR(255),
     rol VARCHAR(50)
 );
+CREATE TABLE IF NOT EXISTS dictados (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    titulo VARCHAR(255),
+    descripcion TEXT,
+    imagen_url VARCHAR(255),
+    instructor_id INT
+);
 CREATE TABLE IF NOT EXISTS cursos (
     id INT AUTO_INCREMENT PRIMARY KEY,
     nombre VARCHAR(100) NOT NULL,
@@ -17,24 +24,24 @@ CREATE TABLE IF NOT EXISTS cursos (
     instructor_id INT,
     FOREIGN KEY (instructor_id) REFERENCES usuarios(id) ON DELETE SET NULL
 );
-CREATE TABLE tareas (
+CREATE TABLE if not exists tareas (
     id INT AUTO_INCREMENT PRIMARY KEY,
     titulo VARCHAR(100) NOT NULL,
     descripcion TEXT,
-    curso_id INT NOT NULL,
     docente_id INT NOT NULL,
-    FOREIGN KEY (curso_id) REFERENCES cursos(id),
-    FOREIGN KEY (docente_id) REFERENCES usuarios(id)
+    dictado_id int,
+    FOREIGN KEY (docente_id) REFERENCES usuarios(id),
+    FOREIGN KEY (dictado_id) REFERENCES dictados(id)
 );
 
 CREATE TABLE IF NOT EXISTS inscripciones (
   id INT AUTO_INCREMENT PRIMARY KEY,
   usuario_id INT NOT NULL,
-  curso_id INT NOT NULL,
+  dictado_id INT NOT NULL,
   fecha_inscripcion DATETIME DEFAULT CURRENT_TIMESTAMP,
   UNIQUE KEY ux_inscripcion (usuario_id, curso_id),
   FOREIGN KEY (usuario_id) REFERENCES usuarios(id) ON DELETE CASCADE,
-  FOREIGN KEY (curso_id) REFERENCES cursos(id) ON DELETE CASCADE
+  FOREIGN KEY (dictado_id) REFERENCES dictado(id) ON DELETE CASCADE
 );
 
 
@@ -46,7 +53,7 @@ ALTER TABLE tareas
 CREATE TABLE IF NOT EXISTS calificaciones (
   id INT AUTO_INCREMENT PRIMARY KEY,
   estudiante_id INT NOT NULL,
-  curso_id INT NOT NULL,
+  dictado_id INT NOT NULL,
   tarea_id INT NULL,
   valor DECIMAL(5,2) NOT NULL,
   comentarios TEXT,
@@ -83,3 +90,25 @@ ADD COLUMN estado ENUM('pendiente','aceptado','rechazado') DEFAULT 'pendiente';
 ALTER TABLE cursos
 ADD COLUMN docente_id INT,
 ADD FOREIGN KEY (docente_id) REFERENCES usuarios(id);
+select * from cursos;
+
+CREATE TABLE IF NOT EXISTS lapices (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    titulo VARCHAR(255),
+    descripcion TEXT,
+    imagen_url VARCHAR(255),
+    instructor_id INT
+);
+select * from lapices;
+
+select * from dictados;
+
+
+ALTER TABLE tareas ADD COLUMN archivo_pdf VARCHAR(255) NULL;
+ALTER TABLE inscripciones
+ADD COLUMN dictado_id INT NULL,
+ADD CONSTRAINT fk_dictado FOREIGN KEY (dictado_id) REFERENCES dictados(id);
+ALTER TABLE calificaciones
+ADD COLUMN dictado_id INT NULL,
+ADD CONSTRAINT fk_dictado FOREIGN KEY (dictado_id) REFERENCES dictados(id);
+DESCRIBE calificaciones;

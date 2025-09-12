@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block title %}Dictados - Aula Virtual{% endblock %}
+{% block content %}
+
+    <h1>Lista de Dictados</h1>
+
+    <a href="{{ url_for('agregar_dictado') }}">Agregar Dictado</a>
+
+    {% if dictados %}
+        <ul>
+            {% for dictado in dictados %}
+                <li>
+                    <h3>{{ dictado.titulo }}</h3>
+                    <p>{{ dictado.descripcion }}</p>
+                    {% if dictado.imagen_url %}
+                        <img src="{{ dictado.imagen_url }}" alt="{{ dictado.titulo }}" width="150">
+                    {% endif %}
+                    <a href="{{ url_for('ver_dictado', dictado_id=dictado.id) }}">
+        {{ dictado.titulo }}
+      </a>
+                </li>
+            {% endfor %}
+        </ul>
+    {% else %}
+        <p>No hay dictados cargados todavía.</p>
+    {% endif %}
+
+{% endblock %}

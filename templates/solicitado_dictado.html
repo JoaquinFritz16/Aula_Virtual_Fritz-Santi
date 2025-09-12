@@ -1,0 +1,18 @@
+<h2>Solicitudes pendientes - Dictado {{ dictado_id }}</h2>
+<table class="table">
+    <tr>
+        <th>Nombre</th>
+        <th>Email</th>
+        <th>Acciones</th>
+    </tr>
+    {% for alumno in pendientes %}
+    <tr>
+        <td>{{ alumno.nombre }}</td>
+        <td>{{ alumno.email }}</td>
+        <td>
+            <a href="{{ url_for('gestionar_inscripcion_dictado', inscripcion_id=alumno.id, accion='aceptado') }}" class="btn btn-success">Aceptar</a>
+            <a href="{{ url_for('gestionar_inscripcion_dictado', inscripcion_id=alumno.id, accion='rechazado') }}" class="btn btn-danger">Rechazar</a>
+        </td>
+    </tr>
+    {% endfor %}
+</table>

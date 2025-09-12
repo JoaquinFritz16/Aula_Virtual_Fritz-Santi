@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>{{ dictado.titulo }}</h2>
+<p>{{ dictado.descripcion }}</p>
+
+<a href="{{ url_for('nueva_tarea') }}?dictado_id={{ dictado.id }}" class="btn btn-success mb-3">➕ Crear nueva tarea</a>
+{% if usuario.rol == "estudiante" %}
+<form method="post" action="{{ url_for('inscribirse_dictado', dictado_id=dictado.id) }}">
+    <button type="submit" class="btn btn-success">Inscribirse</button>
+</form>
+{% endif %}
+
+{% if tareas %}
+  <table class="table table-striped">
+    <thead>
+      <tr>
+        <th>Título</th>
+        <th>Descripción</th>
+        <th>Entrega</th>
+        <th>Archivo</th>
+        <th>Nota</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for t in tareas %}
+      <tr>
+        <td>{{ t.titulo }}</td>
+        <td>{{ t.descripcion }}</td>
+        <td>{{ t.fecha_entrega or "Sin fecha" }}</td>
+        <td>
+          {% if t.archivo_pdf %}
+            <a href="{{ url_for('descargar_tarea', filename=t.archivo_pdf) }}">📄 Descargar PDF</a>
+          {% else %}
+            -
+          {% endif %}
+        </td>
+        <td>
+          {% if calificaciones[t.id] %}
+            {{ calificaciones[t.id].valor }}
+          {% else %}
+            Pendiente
+          {% endif %}
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+{% else %}
+  <p>No hay tareas creadas aún.</p>
+{% endif %}
+{% endblock %}

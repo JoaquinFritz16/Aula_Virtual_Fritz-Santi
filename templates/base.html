@@ -23,7 +23,8 @@
             <h2 class="text-white">📘 Aula</h2>
             <ul class="nav flex-column">
                 <li class="nav-item"><a href="{{ url_for('dashboard') }}" class="nav-link text-white">Dashboard</a></li>
-                <li class="nav-item"><a href="{{ url_for('cursos') }}" class="nav-link text-white">Cursos</a></li>
+                <!-- <li class="nav-item"><a href="{{ url_for('cursos') }}" class="nav-link text-white">Cursos</a></li> -->
+                <li class="nav-item"><a href="{{url_for('dictados')}}" class="nav-link text-white">Dictados</a></li>
                 <li class="nav-item"><a href="{{ url_for('ver_notificaciones') }}" class="nav-link text-white">Notificaciones</a></li>
                 <li class="nav-item"><a href="{{ url_for('logout') }}" class="nav-link text-white">Salir</a></li>
             </ul>

@@ -1,13 +1,31 @@
+import os
+from werkzeug.utils import secure_filename
 from datetime import timedelta
 from functools import wraps
 from flask import Flask, render_template, redirect, url_for, request, flash, session
 from werkzeug.security import generate_password_hash, check_password_hash
-from models import Usuario, Curso, Tarea, Inscripcion, Notificacion, Calificacion
+from models import Usuario, Curso, Tarea, Inscripcion, Notificacion, Calificacion, Lapiz, Dictado
 from forms import LoginForm, RegistrationForm, CourseForm
 from db import get_db_connection
 app = Flask(__name__)
 app.secret_key = "clave_secreta_segura"
 
+
+UPLOAD_FOLDER = "uploads/tareas"
+ALLOWED_EXTENSIONS = {"pdf"}
+
+app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
+os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+
+from flask import send_from_directory
+
+@app.route("/tareas/descargar/<filename>")
+def descargar_tarea(filename):
+    carpeta = "uploads/tareas"
+    return send_from_directory(carpeta, filename, as_attachment=True)
+
+def allowed_file(filename):
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 app.config['SESSION_PERMANENT'] = True
 app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(days=7)
@@ -111,18 +129,12 @@ def dashboard():
 @login_required
 def cursos():
     usuario = Usuario.buscar_por_id(session["usuario_id"])
-    conn = get_db_connection()
     if usuario.rol == "docente":
-
-        cursor = conn.cursor(dictionary=True)
-        cursor.execute("SELECT * FROM cursos WHERE instructor_id=%s", (usuario.id,))
-        cursos = cursor.fetchall()
-        cursor.close()
+        cursos = Curso.obtener_por_docente(usuario.id)
     else:
-
-        cursos = Curso.get_all(conn)
-    conn.close()
+        cursos = Curso.get_all()  # ❌ sin pasar conn
     return render_template("cursos.html", cursos=cursos, usuario=usuario)
+
 
 @app.route("/cursos/<int:curso_id>")
 @login_required
@@ -202,21 +214,18 @@ def ver_notificaciones():
 def agregar_curso():
     form = CourseForm()
     if form.validate_on_submit():
-        
         curso = Curso(
             nombre=form.title.data,
             descripcion=form.description.data,
             instructor_id=session["usuario_id"]
         )
-        # Abrimos conexión y guardamos
-        conn = get_db_connection()
-        curso.save(conn)
-        conn.close()
+        curso.save()  # ❌ ya no pasar conn
 
         flash("Curso agregado correctamente", "success")
         return redirect(url_for("cursos"))
 
     return render_template("agregar_curso.html", form=form)
+
 
 @app.route("/cursos/editar/<int:id>", methods=["GET", "POST"])
 def editar_curso(id):
@@ -255,24 +264,33 @@ def eliminar_curso(id):
 
 
 @app.route("/tareas/nueva", methods=["GET", "POST"])
+@login_required
+@roles_required("docente")
 def nueva_tarea():
-    if "usuario_id" not in session:
-        return redirect(url_for("login"))
     usuario = Usuario.buscar_por_id(session["usuario_id"])
-    if usuario.rol != "docente":
-        flash("❌ No tienes permiso para crear tareas", "danger")
-        return redirect(url_for("dashboard"))
 
     if request.method == "POST":
         titulo = request.form["titulo"]
         descripcion = request.form["descripcion"]
-        curso_id = request.form["curso_id"]
-        Tarea.crear(titulo, descripcion, curso_id, usuario.id)
+        dictado_id = request.form.get("dictado_id") or None
+
+        archivo_pdf = None
+        if "archivo_pdf" in request.files:
+            file = request.files["archivo_pdf"]
+            if file and allowed_file(file.filename):
+                filename = secure_filename(file.filename)
+                filepath = os.path.join(app.config["UPLOAD_FOLDER"], filename)
+                file.save(filepath)
+                archivo_pdf = filename  # guardamos solo el nombre
+
+        Tarea.crear(titulo, descripcion, usuario.id, dictado_id, archivo_pdf)
         flash("✅ Tarea creada correctamente", "success")
         return redirect(url_for("dashboard"))
 
-    cursos = Curso.get_all(get_db_connection())
-    return render_template("nueva_tarea.html", cursos=cursos)
+    cursos = Curso.obtener_por_docente(usuario.id)
+    dictados = Dictado.get_all()  # podrías filtrar por docente también
+    return render_template("nueva_tarea.html", cursos=cursos, dictados=dictados)
+
 @app.route("/cursos/<int:curso_id>/inscribirse", methods=["POST"])
 @login_required
 @roles_required("estudiante")
@@ -292,5 +310,118 @@ def enviar_notificacion(curso_id):
     flash("Notificación enviada", "success")
     return redirect(url_for("curso_detalle", curso_id=curso_id))
 
+
+@app.route("/lapices")
+@login_required
+def lapices():
+    lista = Lapiz.get_all()
+    return render_template("lapices.html", lapices=lista)
+
+
+@app.route("/lapices/agregar", methods=["GET", "POST"])
+@login_required
+@roles_required("docente")
+def agregar_lapiz():
+    usuario = Usuario.buscar_por_id(session["usuario_id"])  # obtener usuario logueado
+    
+    if request.method == "POST":
+        titulo = request.form.get("titulo")
+        descripcion = request.form.get("descripcion")
+        imagen_url = request.form.get("imagen_url")
+
+        nuevo = Lapiz(titulo, descripcion, imagen_url)
+        nuevo.save(usuario.id)  # guarda el lapiz con el id del docente
+        
+        flash("✅ Lápiz agregado correctamente", "success")
+        return redirect(url_for("lapices"))
+
+    return render_template("agregar_lapiz.html")
+
+
+@app.route("/dictados")
+@login_required
+def dictados():
+    lista = Dictado.get_all()
+    return render_template("dictados.html", dictados=lista)
+
+
+@app.route("/dictados/agregar", methods=["GET", "POST"])
+@login_required
+@roles_required("docente")
+def agregar_dictado():
+    usuario = Usuario.buscar_por_id(session["usuario_id"])  # obtener usuario logueado
+    
+    if request.method == "POST":
+        titulo = request.form.get("titulo")
+        descripcion = request.form.get("descripcion")
+        imagen_url = request.form.get("imagen_url")
+
+        nuevo = Dictado(titulo, descripcion, imagen_url)
+        nuevo.save(usuario.id)  # guarda el lapiz con el id del docente
+        
+        flash("Dictado agregado correctamente", "success")
+        return redirect(url_for("dictados"))
+
+    return render_template("agregar_dictado.html")
+@app.route("/dictados/<int:dictado_id>")
+def ver_dictado(dictado_id):
+    if "usuario_id" not in session:
+        return redirect(url_for("login"))
+
+    usuario = Usuario.buscar_por_id(session["usuario_id"])
+
+    # Obtener dictado
+    dictado = Dictado.buscar_por_id(dictado_id)
+    if not dictado:
+        flash("Dictado no encontrado", "danger")
+        return redirect(url_for("routes.dictados"))
+
+    # Obtener tareas del dictado
+    tareas = Tarea.obtener_por_dictado(dictado_id)
+
+    # Si el usuario es estudiante, obtener calificaciones
+    calificaciones = {}
+    if usuario.rol == "estudiante":
+        calificaciones = Calificacion.obtener_resumen_por_dictado_y_estudiante(dictado_id, usuario.id)
+
+    return render_template(
+        "dictado_detalle.html",
+        dictado=dictado,
+        tareas=tareas,
+        calificaciones=calificaciones,
+        usuario=usuario
+    )
+@app.route("/dictados/<int:dictado_id>/inscribirse", methods=["POST"])
+@login_required
+@roles_required("estudiante")
+def inscribirse_dictado(dictado_id):
+    usuario_id = session['usuario_id']
+    Inscripcion.inscribir(usuario_id, dictado_id=dictado_id)
+    Notificacion.crear(
+        f"Te inscribiste en el dictado {dictado_id}",
+        usuario_id,
+        tipo="inscripcion",
+        url_referencia=f"/dictados/{dictado_id}"
+    )
+    flash("✅ Solicitud de inscripción enviada, espera aprobación del docente", "success")
+    return redirect(url_for("ver_dictado", dictado_id=dictado_id))
+@app.route("/dictados/<int:dictado_id>/solicitudes")
+@login_required
+@roles_required("docente")
+def solicitudes_dictado(dictado_id):
+    pendientes = Inscripcion.obtener_pendientes_por_dictado(dictado_id)
+    return render_template("solicitudes_dictado.html", pendientes=pendientes, dictado_id=dictado_id)
+@app.route("/inscripcion_dictado/<int:inscripcion_id>/<string:accion>")
+@login_required
+@roles_required("docente")
+def gestionar_inscripcion_dictado(inscripcion_id, accion):
+    if accion in ["aceptado", "rechazado"]:
+        Inscripcion.actualizar_estado(inscripcion_id, accion)
+        flash(f"Inscripción {accion}", "success")
+    return redirect(request.referrer or url_for("dictados"))
+
+
+
 if __name__ == "__main__":
     app.run(debug=True)
+

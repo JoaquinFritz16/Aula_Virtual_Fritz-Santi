@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>{{ dictado.titulo }}</h2>
+<p>{{ dictado.descripcion }}</p>
+
+<h4 class="mt-4">Tareas asignadas</h4>
+{% if tareas %}
+  <ul class="list-group">
+    {% for t in tareas %}
+      <li class="list-group-item">
+        <strong>{{ t.titulo }}</strong> — {{ t.descripcion }}
+        {% if t.archivo_pdf %}
+          <br><a href="{{ url_for('descargar_tarea', filename=t.archivo_pdf) }}">📄 Descargar PDF</a>
+        {% endif %}
+        {% if t.fecha_entrega %}
+          <br><small>Entrega: {{ t.fecha_entrega }}</small>
+        {% endif %}
+      </li>
+    {% endfor %}
+  </ul>
+{% else %}
+  <p>No hay tareas disponibles en este dictado.</p>
+{% endif %}
+{% endblock %}

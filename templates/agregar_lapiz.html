@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Agregar Lápiz</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/themes.css') }}">
+</head>
+<body>
+    <h1>Agregar Lápiz</h1>
+
+    <form method="POST">
+        <label for="titulo">Título:</label><br>
+        <input type="text" id="titulo" name="titulo" required><br><br>
+
+        <label for="descripcion">Descripción:</label><br>
+        <textarea id="descripcion" name="descripcion" rows="4" cols="50"></textarea><br><br>
+
+        <label for="imagen_url">URL de Imagen:</label><br>
+        <input type="text" id="imagen_url" name="imagen_url"><br><br>
+
+        <button type="submit">Agregar</button>
+    </form>
+
+    <br>
+    <a href="{{ url_for('lapices') }}">Volver a la lista</a>
+</body>
+</html>

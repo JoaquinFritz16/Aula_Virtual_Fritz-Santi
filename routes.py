@@ -2,7 +2,7 @@ from flask import Blueprint, render_template, request, redirect, url_for, sessio
 import mysql.connector
 from db import get_db_connection
 from werkzeug.security import generate_password_hash, check_password_hash
-from models import Inscripcion, Curso
+from models import Inscripcion, Curso, Lapiz, Usuario, Dictado, Tarea, Calificacion
 
 routes = Blueprint("routes", __name__)
 
@@ -100,29 +100,29 @@ def cursos():
     return render_template("cursos.html", cursos=cursos)
 
 
-# @routes.route("/cursos/crear", methods=["GET", "POST"])
-# def agregar_curso():
-#     if "user_id" not in session:
-#         return redirect(url_for("routes.login"))
+@routes.route("/cursos/crear", methods=["GET", "POST"])
+def agregar_curso():
+    if "user_id" not in session:
+        return redirect(url_for("routes.login"))
 
-#     if request.method == "POST":
-#         nombre = request.form["nombre"]
-#         descripcion = request.form["descripcion"]
+    if request.method == "POST":
+        nombre = request.form["nombre"]
+        descripcion = request.form["descripcion"]
 
-#         conn = get_db_connection()
-#         cursor = conn.cursor()
-#         cursor.execute(
-#             "INSERT INTO cursos (nombre, descripcion, instructor_id) VALUES (%s, %s, %s)",
-#             (nombre, descripcion, session["user_id"]),
-#         )
-#         conn.commit()
-#         cursor.close()
-#         conn.close()
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        cursor.execute(
+            "INSERT INTO cursos (nombre, descripcion, instructor_id) VALUES (%s, %s, %s)",
+            (nombre, descripcion, session["user_id"]),
+        )
+        conn.commit()
+        cursor.close()
+        conn.close()
 
-#         flash("Curso agregado correctamente", "success")
-#         return redirect(url_for("routes.cursos"))
+        flash("Curso agregado correctamente", "success")
+        return redirect(url_for("routes.cursos"))
 
-#     return render_template("agregar_curso.html")
+    return render_template("agregar_curso.html")
 
 
 @routes.route("/cursos/editar/<int:id>", methods=["GET", "POST"])
@@ -216,3 +216,88 @@ def nuevo_curso():
     return render_template("curso_form.html")
 
 
+@routes.route("/lapices")
+
+def lapices():
+    if "user_id" not in session:
+        return redirect(url_for("login"))
+    lista = Lapiz.get_all()
+    return render_template("lapices.html", lapices=lista)
+
+@routes.route("/lapices/agregar", methods=["GET", "POST"])
+ # solo docentes pueden agregar
+def agregar_lapiz():
+    if "user_id" not in session:
+        return redirect(url_for("login"))
+    usuario = Usuario.buscar_por_id(session["usuario_id"])
+
+    if request.method == "POST":
+        titulo = request.form.get("titulo")
+        descripcion = request.form.get("descripcion")
+        imagen_url = request.form.get("imagen_url")
+
+        nuevo = Lapiz(titulo, descripcion, imagen_url)
+        nuevo.save(usuario.id)
+
+        flash("✅ Lápiz agregado correctamente", "success")
+        return redirect(url_for("routes.lapices"))
+
+    return render_template("agregar_lapiz.html")
+
+
+@routes.route("/dictados")
+
+def dictados():
+    if "user_id" not in session:
+        return redirect(url_for("login"))
+    lista = Dictado.get_all()
+    return render_template("dictado.html", dictados=lista)
+
+@routes.route("/dictados/agregar", methods=["GET", "POST"])
+ # solo docentes pueden agregar
+def agregar_dictado():
+    if "user_id" not in session:
+        return redirect(url_for("login"))
+    usuario = Usuario.buscar_por_id(session["usuario_id"])
+
+    if request.method == "POST":
+        titulo = request.form.get("titulo")
+        descripcion = request.form.get("descripcion")
+        imagen_url = request.form.get("imagen_url")
+
+        nuevo = Dictado(titulo, descripcion, imagen_url)
+        nuevo.save(usuario.id)
+
+        flash("Dictado agregado correctamente", "success")
+        return redirect(url_for("routes.dictados"))
+
+    return render_template("agregar_dictado.html")
+
+@routes.route("/dictados/<int:dictado_id>")
+def ver_dictado(dictado_id):
+    if "usuario_id" not in session:
+        return redirect(url_for("login"))
+
+    usuario = Usuario.buscar_por_id(session["usuario_id"])
+
+    # Obtener dictado
+    dictado = Dictado.buscar_por_id(dictado_id)
+    if not dictado:
+        flash("Dictado no encontrado", "danger")
+        return redirect(url_for("routes.dictados"))
+
+    # Obtener tareas del dictado
+    tareas = Tarea.obtener_por_dictado(dictado_id)
+
+    # Si el usuario es estudiante, obtener calificaciones
+    calificaciones = {}
+    if usuario.rol == "estudiante":
+        calificaciones = Calificacion.obtener_resumen_por_dictado_y_estudiante(dictado_id, usuario.id)
+
+    return render_template(
+        "dictado_detalle.html",
+        dictado=dictado,
+        tareas=tareas,
+        calificaciones=calificaciones,
+        usuario=usuario
+    )
