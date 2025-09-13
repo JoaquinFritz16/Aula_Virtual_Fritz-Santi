@@ -106,35 +106,26 @@ class Curso:
         cursor.close()
         conn.close()
 class Tarea:
-    def __init__(self, id, titulo, descripcion, docente_id, dictado_id=None, archivo_pdf=None):
+    def __init__(self, id, titulo, descripcion, docente_id, dictado_id=None, archivo_pdf=None, fecha_entrega=None):
         self.id = id
         self.titulo = titulo
         self.descripcion = descripcion
-        
         self.docente_id = docente_id
         self.dictado_id = dictado_id
         self.archivo_pdf = archivo_pdf
+        self.fecha_entrega = fecha_entrega
 
     @classmethod
-    def crear(cls, titulo, descripcion, docente_id, dictado_id=None, archivo_pdf=None):
+    def crear(cls, titulo, descripcion, docente_id, dictado_id=None, archivo_pdf=None, fecha_entrega=None):
         db = get_db_connection()
         cursor = db.cursor()
         cursor.execute(
-            "INSERT INTO tareas (titulo, descripcion,  docente_id, dictado_id, archivo_pdf) VALUES (%s, %s, %s, %s, %s)",
-            (titulo, descripcion,  docente_id, dictado_id, archivo_pdf),
+            "INSERT INTO tareas (titulo, descripcion, docente_id, dictado_id, archivo_pdf, fecha_entrega) VALUES (%s, %s, %s, %s, %s, %s)",
+            (titulo, descripcion, docente_id, dictado_id, archivo_pdf, fecha_entrega),
         )
         db.commit()
         cursor.close()
 
-
-    # @classmethod
-    # def obtener_por_curso(cls, curso_id):
-    #     db = get_db_connection()
-    #     cursor = db.cursor(dictionary=True)
-    #     cursor.execute("SELECT * FROM tareas WHERE curso_id = %s", (curso_id,))
-    #     rows = cursor.fetchall()
-    #     cursor.close()
-    #     return [cls(**row) for row in rows]
     @staticmethod
     def obtener_por_dictado(dictado_id):
         conn = get_db_connection()
@@ -144,7 +135,7 @@ class Tarea:
         cursor.close()
         conn.close()
         return tareas
-
+    
 class Inscripcion:
 
     @staticmethod

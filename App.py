@@ -66,7 +66,7 @@ def register():
         password = generate_password_hash(form.password.data)
         rol = "estudiante"
         Usuario.crear(nombre, email, password, rol)
-        flash("✅ Usuario registrado correctamente", "success")
+        flash("Usuario registrado correctamente", "success")
         return redirect(url_for("login"))
     if form.errors:
         flash("Revisa los datos del formulario.", "danger")
@@ -83,7 +83,7 @@ def login():
             session["usuario_nombre"] = usuario.nombre
             flash(f"Bienvenido {usuario.nombre}", "success")
             return redirect(url_for("dashboard"))
-        flash("❌ Credenciales incorrectas", "danger")
+        flash("Credenciales incorrectas", "danger")
     if form.errors:
         flash("Revisa los datos del formulario.", "danger")
     return render_template("login.html", form=form)
@@ -110,7 +110,7 @@ def dashboard():
         conn.close()
         return render_template("dashboard_docente.html", usuario=usuario, cursos=cursos)
 
-    # 👇 Esto va en un else implícito (solo si no es docente)
+
     cursos = Inscripcion.obtener_cursos_por_usuario(usuario.id)
     calificaciones = Calificacion.obtener_por_estudiante(usuario.id)
     notifs = Notificacion.obtener_no_leidas(usuario.id)
@@ -132,7 +132,7 @@ def cursos():
     if usuario.rol == "docente":
         cursos = Curso.obtener_por_docente(usuario.id)
     else:
-        cursos = Curso.get_all()  # ❌ sin pasar conn
+        cursos = Curso.get_all() 
     return render_template("cursos.html", cursos=cursos, usuario=usuario)
 
 
@@ -219,7 +219,7 @@ def agregar_curso():
             descripcion=form.description.data,
             instructor_id=session["usuario_id"]
         )
-        curso.save()  # ❌ ya no pasar conn
+        curso.save()  
 
         flash("Curso agregado correctamente", "success")
         return redirect(url_for("cursos"))
@@ -281,14 +281,14 @@ def nueva_tarea():
                 filename = secure_filename(file.filename)
                 filepath = os.path.join(app.config["UPLOAD_FOLDER"], filename)
                 file.save(filepath)
-                archivo_pdf = filename  # guardamos solo el nombre
+                archivo_pdf = filename  
 
         Tarea.crear(titulo, descripcion, usuario.id, dictado_id, archivo_pdf)
-        flash("✅ Tarea creada correctamente", "success")
+        flash(" Tarea creada correctamente", "success")
         return redirect(url_for("dashboard"))
 
     cursos = Curso.obtener_por_docente(usuario.id)
-    dictados = Dictado.get_all()  # podrías filtrar por docente también
+    dictados = Dictado.get_all()  
     return render_template("nueva_tarea.html", cursos=cursos, dictados=dictados)
 
 @app.route("/cursos/<int:curso_id>/inscribirse", methods=["POST"])
@@ -298,7 +298,7 @@ def inscribirse_curso(curso_id):
     usuario_id = session['usuario_id']
     Inscripcion.inscribir(usuario_id, curso_id)
     Notificacion.crear(f"Te inscribiste en el curso {curso_id}", usuario_id, tipo="inscripcion", url_referencia=f"/cursos/{curso_id}")
-    flash("✅ Inscripción exitosa", "success")
+    flash(" Inscripción exitosa", "success")
     return redirect(url_for("curso_detalle", curso_id=curso_id))
 @app.route("/cursos/<int:curso_id>/notificar", methods=["POST"])
 @login_required
@@ -332,7 +332,7 @@ def agregar_lapiz():
         nuevo = Lapiz(titulo, descripcion, imagen_url)
         nuevo.save(usuario.id)  # guarda el lapiz con el id del docente
         
-        flash("✅ Lápiz agregado correctamente", "success")
+        flash(" Lápiz agregado correctamente", "success")
         return redirect(url_for("lapices"))
 
     return render_template("agregar_lapiz.html")
@@ -370,16 +370,16 @@ def ver_dictado(dictado_id):
 
     usuario = Usuario.buscar_por_id(session["usuario_id"])
 
-    # Obtener dictado
+   
     dictado = Dictado.buscar_por_id(dictado_id)
     if not dictado:
         flash("Dictado no encontrado", "danger")
-        return redirect(url_for("routes.dictados"))
+        return redirect(url_for("dictados"))
 
-    # Obtener tareas del dictado
+    
     tareas = Tarea.obtener_por_dictado(dictado_id)
 
-    # Si el usuario es estudiante, obtener calificaciones
+    
     calificaciones = {}
     if usuario.rol == "estudiante":
         calificaciones = Calificacion.obtener_resumen_por_dictado_y_estudiante(dictado_id, usuario.id)
@@ -403,7 +403,7 @@ def inscribirse_dictado(dictado_id):
         tipo="inscripcion",
         url_referencia=f"/dictados/{dictado_id}"
     )
-    flash("✅ Solicitud de inscripción enviada, espera aprobación del docente", "success")
+    flash(" Solicitud de inscripción enviada, espera aprobación del docente", "success")
     return redirect(url_for("ver_dictado", dictado_id=dictado_id))
 @app.route("/dictados/<int:dictado_id>/solicitudes")
 @login_required

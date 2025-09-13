@@ -39,9 +39,9 @@ CREATE TABLE IF NOT EXISTS inscripciones (
   usuario_id INT NOT NULL,
   dictado_id INT NOT NULL,
   fecha_inscripcion DATETIME DEFAULT CURRENT_TIMESTAMP,
-  UNIQUE KEY ux_inscripcion (usuario_id, curso_id),
+  UNIQUE KEY ux_inscripcion (usuario_id, dictado_id),
   FOREIGN KEY (usuario_id) REFERENCES usuarios(id) ON DELETE CASCADE,
-  FOREIGN KEY (dictado_id) REFERENCES dictado(id) ON DELETE CASCADE
+  FOREIGN KEY (dictado_id) REFERENCES dictados(id) ON DELETE CASCADE
 );
 
 
@@ -59,7 +59,7 @@ CREATE TABLE IF NOT EXISTS calificaciones (
   comentarios TEXT,
   fecha_registro DATETIME DEFAULT CURRENT_TIMESTAMP,
   FOREIGN KEY (estudiante_id) REFERENCES usuarios(id) ON DELETE CASCADE,
-  FOREIGN KEY (curso_id) REFERENCES cursos(id) ON DELETE CASCADE,
+  FOREIGN KEY (dictado_id) REFERENCES dictados(id) ON DELETE CASCADE,
   FOREIGN KEY (tarea_id) REFERENCES tareas(id) ON DELETE SET NULL
 );
 
@@ -105,10 +105,4 @@ select * from dictados;
 
 
 ALTER TABLE tareas ADD COLUMN archivo_pdf VARCHAR(255) NULL;
-ALTER TABLE inscripciones
-ADD COLUMN dictado_id INT NULL,
-ADD CONSTRAINT fk_dictado FOREIGN KEY (dictado_id) REFERENCES dictados(id);
-ALTER TABLE calificaciones
-ADD COLUMN dictado_id INT NULL,
-ADD CONSTRAINT fk_dictado FOREIGN KEY (dictado_id) REFERENCES dictados(id);
 DESCRIBE calificaciones;

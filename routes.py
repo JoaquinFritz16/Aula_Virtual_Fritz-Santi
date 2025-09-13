@@ -301,3 +301,29 @@ def ver_dictado(dictado_id):
         calificaciones=calificaciones,
         usuario=usuario
     )
+
+@routes.route("/tareas/nueva", methods=["GET", "POST"])
+def nueva_tarea():
+    if "usuario_id" not in session:
+        return redirect(url_for("routes.login"))
+
+    if request.method == "POST":
+        titulo = request.form["titulo"]
+        descripcion = request.form["descripcion"]
+        dictado_id = request.form.get("dictado_id") or None
+        fecha_entrega = request.form.get("fecha_entrega") or None
+
+        archivo_pdf = None
+        if "archivo_pdf" in request.files:
+            file = request.files["archivo_pdf"]
+            if file.filename:
+                archivo_pdf = file.filename
+                file.save("uploads/" + archivo_pdf)
+
+        Tarea.crear(titulo, descripcion, session["usuario_id"], dictado_id, archivo_pdf, fecha_entrega)
+
+        flash("✅ Tarea creada correctamente", "success")
+        return redirect(url_for("dashboard"))
+
+    dictados = Dictado.get_all()
+    return render_template("nueva_tarea.html", dictados=dictados)

@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% block content %}
 <div class="container mt-4">
-  <h2>➕ Crear nueva tarea</h2>
+  <h2> Crear nueva tarea</h2>
 
   <form method="POST" enctype="multipart/form-data" class="mt-3">
     <div class="mb-3">
@@ -14,7 +14,6 @@
       <textarea class="form-control" id="descripcion" name="descripcion" rows="3" required></textarea>
     </div>
 
-   
     <div class="mb-3">
       <label for="dictado_id" class="form-label">Dictado</label>
       <select class="form-select" id="dictado_id" name="dictado_id">
@@ -25,6 +24,11 @@
           </option>
         {% endfor %}
       </select>
+    </div>
+
+    <div class="mb-3">
+      <label for="fecha_entrega" class="form-label">Fecha de entrega</label>
+      <input type="date" class="form-control" id="fecha_entrega" name="fecha_entrega">
     </div>
 
     <div class="mb-3">
